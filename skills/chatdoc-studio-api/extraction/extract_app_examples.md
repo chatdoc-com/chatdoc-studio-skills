@@ -165,6 +165,11 @@ struct ExtractAppResponse {
     schema_data: serde_json::Value,
 }
 
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
 #[derive(Debug, Serialize)]
 struct CreateExtractAppRequest<'a> {
     name: &'a str,
@@ -343,11 +348,19 @@ console.log(`Upload ID: ${uploadId}`);
 
 ```rust
 use reqwest::multipart::{Form, Part};
+use reqwest::Client;
 use serde::Deserialize;
+
+const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
 #[derive(Debug, Deserialize)]
 struct UploadData {
     upload_id: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
 }
 
 async fn upload_and_extract(
@@ -358,9 +371,21 @@ async fn upload_and_extract(
     let client = Client::new();
 
     let file_bytes = std::fs::read(file_path)?;
+    let mime = match std::path::Path::new(file_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase())
+        .as_deref()
+    {
+        Some("pdf") => "application/pdf",
+        Some("doc") => "application/msword",
+        Some("docx") => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        _ => "application/octet-stream",
+    };
+
     let file_part = Part::bytes(file_bytes)
         .file_name(std::path::Path::new(file_path).file_name().unwrap().to_string_lossy().to_string())
-        .mime_str("application/pdf")?;
+        .mime_str(mime)?;
 
     let form = Form::new().part("file", file_part);
 
@@ -560,6 +585,11 @@ struct ExtractionResult {
 struct ApiErrorResponse {
     code: String,
     detail: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
 }
 
 async fn get_extraction_result(

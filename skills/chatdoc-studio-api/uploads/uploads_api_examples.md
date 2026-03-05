@@ -107,6 +107,11 @@ struct UploadResponse {
     created_at: i64,
 }
 
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
 async fn upload_file(file_path: &str) -> Result<UploadResponse, Box<dyn std::error::Error>> {
     let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
     let client = Client::new();
@@ -400,10 +405,11 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
             # Still processing (202 or other status), wait and retry
             print(f"Publishing... ({attempt + 1}/{max_retries})")
             time.sleep(delay)
-        return False # timeout
+        return False  # timeout
     except Exception:
-      return False
-publish_app_with_retry(app_id)
+        return False
+
+ready = publish_app_with_retry(app_id)
 if ready:
     print("You can now start using the chat app!")
 ```

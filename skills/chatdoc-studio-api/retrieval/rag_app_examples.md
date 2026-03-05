@@ -113,6 +113,11 @@ struct RagAppResponse {
     documents: Vec<Document>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
 #[derive(Debug, Serialize)]
 struct Source {
     id: String,
@@ -379,7 +384,10 @@ for (const result of results) {
 ### Rust
 
 ```rust
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+
+const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
 #[derive(Debug, Serialize)]
 struct RetrievalRequest<'a> {
@@ -407,6 +415,11 @@ struct RetrievalResult {
     #[serde(rename = "document_name")]
     document_name: String,
     elements: Vec<Element>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
 }
 
 async fn retrieval_query(

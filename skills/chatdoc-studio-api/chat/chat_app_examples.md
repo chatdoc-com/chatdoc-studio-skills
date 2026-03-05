@@ -148,6 +148,11 @@ struct AppResponse {
     team_id: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
 #[derive(Debug, Serialize)]
 struct Source {
     id: String,
