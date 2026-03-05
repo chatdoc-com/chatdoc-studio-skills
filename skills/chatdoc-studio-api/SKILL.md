@@ -39,12 +39,12 @@ Manage API configuration through environment variables:
 
 ### Supported File Types
 
-| API | PDF | DOC | DOCX | HTML |
-|-----|-----|-----|------|------|
-| PDF Parser | ✓ | ✗ | ✗ | ✗ |
-| Chat App | ✓ | ✓ | ✓ | ✓ |
-| RAG App | ✓ | ✓ | ✓ | ✗ |
-| Extract App | ✓ | ✓ | ✓ | ✗ |
+| API | PDF | DOC | DOCX | MD | TXT |
+|-----|-----|-----|------|----|-----|
+| PDF Parser | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Chat App | ✓ | ✓ | ✓ | ✓ | ✓ |
+| RAG App | ✓ | ✓ | ✓ | ✗ | ✗ |
+| Extract App | ✓ | ✓ | ✓ | ✗ | ✗ |
 
 ## API Module Documentation
 
@@ -116,7 +116,7 @@ Error Response:
   "type": "...",
   "code": "...",
   "data": ...,
-  "detail": "....",
+  "detail": "...."
 }
 ```
 

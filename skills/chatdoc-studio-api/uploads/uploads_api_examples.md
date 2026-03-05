@@ -56,7 +56,7 @@ interface UploadResponse {
   upload_id: string;
   name: string;
   file_type: string;
-  status: number;
+  status: string;
   created_at: number;
 }
 
@@ -102,7 +102,7 @@ struct UploadResponse {
     name: String,
     #[serde(rename = "file_type")]
     file_type: String,
-    status: i32,
+    status: String,
     #[serde(rename = "created_at")]
     created_at: i64,
 }
@@ -118,9 +118,23 @@ async fn upload_file(file_path: &str) -> Result<UploadResponse, Box<dyn std::err
         .to_string_lossy()
         .to_string();
 
+    let mime = match std::path::Path::new(file_path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase())
+        .as_deref()
+    {
+        Some("pdf") => "application/pdf",
+        Some("doc") => "application/msword",
+        Some("docx") => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        Some("md") => "application/markdown",
+        Some("txt") => "application/txt",
+        _ => "application/octet-stream",
+    };
+
     let file_part = Part::bytes(file_bytes)
         .file_name(file_name.clone())
-        .mime_str("application/pdf")?;
+        .mime_str(mime)?;
 
     let form = Form::new().part("file", file_part);
 
@@ -173,7 +187,7 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/uploads/" \
 
 ```python
 def wait_for_document_ready(upload_id: str, timeout: int = 300) -> dict:
-    """Wait for document to be fully processed (status == 300)."""
+    """Wait for document to be fully processed (status == "indexed")."""
     url = f"{BASE_URL}/uploads/{upload_id}"
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -184,10 +198,10 @@ def wait_for_document_ready(upload_id: str, timeout: int = 300) -> dict:
         result = response.json()["data"]
 
         status = result["status"]
-        if status == 300:
+        if status == "indexed":
             print("Document is ready!")
             return result
-        elif status < 0:
+        elif status == "failed":
             raise Exception(f"Document processing failed with status: {status}")
         else:
             print(f"Document processing... Status: {status}")
@@ -222,10 +236,10 @@ async function waitForDocumentReady(
 
     const result = response.data.data;
 
-    if (result.status === 300) {
+    if (result.status === 'indexed') {
       console.log('Document is ready!');
       return result;
-    } else if (result.status < 0) {
+    } else if (result.status === 'failed') {
       throw new Error(`Document processing failed with status: ${result.status}`);
     } else {
       console.log(`Document processing... Status: ${result.status}`);
@@ -356,7 +370,7 @@ print("Documents are being parsed in the background...")
 # 3. Wait for app to be ready (all documents processed)
 app_id = app['id']
 def wait_for_app_ready(app_id: str, timeout: int = 600) -> bool:
-    """Wait for all documents in the app to be ready (status == 300)."""
+    """Wait for all documents in the app to be ready."""
     url = f"{BASE_URL}/chat/apps/{app_id}/status"
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -444,7 +458,7 @@ completeWorkflow();
 ```
 
 **Key Points:**
-1. Upload files and get `upload_id` values (status is 1)
+1. Upload files and get `upload_id` values (initial status is `chunking`)
 2. Create app immediately with the `upload_id` values
 3. Parsing is triggered automatically when documents are referenced
 4. Wait for app status before using chat/retrieval features
@@ -504,11 +518,11 @@ async function uploadFileSafe(filePath: string): Promise<UploadResponse | null> 
 
       if (e.response?.status === 400) {
         const errorCode = e.response.data?.error?.code;
-        if (errorCode === 'NOT_SUPPORT_FILE_FORMAT') {
+        if (errorCode === 'not_support_file_format') {
           console.log(`Error: Unsupported file format for ${filePath}`);
-        } else if (errorCode === 'FILE_TOO_LARGE') {
+        } else if (errorCode === 'file_too_large') {
           console.log(`Error: File ${filePath} is too large`);
-        } else if (errorCode === 'EMPTY_FILE') {
+        } else if (errorCode === 'empty_file') {
           console.log(`Error: File ${filePath} is empty`);
         } else {
           console.log(`Error: ${e.response.data}`);

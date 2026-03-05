@@ -134,7 +134,7 @@ console.log(`App ID: ${kbApp.id}`);
 
 ```rust
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 const BASE_URL: &str = "https://api.chatdoc.studio/v1";
@@ -404,27 +404,31 @@ async function publishChatApp(
   const url = `${BASE_URL}/chat/apps/${appId}/publish`;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const response = await axios.post(url, {}, {
-      headers: { Authorization: `Bearer ${API_KEY}` }
-    });
+    try {
+      const response = await axios.post(url, {}, {
+        headers: { Authorization: `Bearer ${API_KEY}` }
+      });
 
-    if (response.status === 200) {
-      console.log('✓ App published successfully!');
-      return;
-    }
-
-    if (response.status === 400) {
-      const errorCode = response.data?.code;
-      if (errorCode === 'already_published') {
-        console.log('✓ App already published!');
+      if (response.status === 200) {
+        console.log('✓ App published successfully!');
         return;
       }
-      throw new Error(`Publish failed: ${errorCode}`);
-    }
 
-    // Still processing, wait and retry
-    console.log(`Publishing... (${attempt + 1}/${maxRetries})`);
-    await new Promise(resolve => setTimeout(resolve, delay));
+      // Still processing, wait and retry
+      console.log(`Publishing... (${attempt + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const errorCode = (error.response.data as { code?: string } | undefined)?.code;
+        if (errorCode === 'already_published') {
+          console.log('✓ App already published!');
+          return;
+        }
+        throw new Error(`Publish failed: ${errorCode ?? 'unknown_error'}`);
+      }
+
+      throw error;
+    }
   }
 
   throw new Error('App did not publish in time');

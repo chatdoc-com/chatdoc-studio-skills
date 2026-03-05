@@ -70,7 +70,7 @@ If the document status is not `indexed` when referenced in an app, the system wi
 | 400 | `file_too_large` | File size exceeds limit |
 | 400 | `empty_file` | File is empty |
 | 402 | - | Insufficient credits |
-| 413 | Payload too large |
+| 413 | - | Payload too large |
 
 ## Usage Flow
 

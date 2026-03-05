@@ -54,7 +54,7 @@ interface UploadResponse {
   data: {
     upload_id: string;
     name: string;
-    status: number;
+    status: string;
     markdown?: string;
   };
 }
@@ -100,7 +100,7 @@ const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 struct UploadData {
     upload_id: String,
     name: String,
-    status: i32,
+    status: String,
     markdown: Option<String>,
 }
 

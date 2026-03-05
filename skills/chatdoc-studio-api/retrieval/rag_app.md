@@ -166,7 +166,7 @@ Execute a semantic search query to retrieve relevant content.
 
 ## Important Notes
 
-1. **Document Status**: All connected documents must have `status == 300` (ELEMENT_PARSED) before using retrieval
+1. **Document Status**: All connected documents must have `status == "indexed"` before using retrieval
 2. **Supported File Types**: Only PDF, DOC, and DOCX files are supported for content retrieval apps
 3. **Training Time**: After creating/updating an app, there may be a brief training period before retrieval is available
 4. **Query Length**: Maximum query length is 3000 characters

@@ -64,7 +64,7 @@ interface RagAppResponse {
   documents: Array<{
     id: string;
     name: string;
-    status: number;
+    status: string;
   }>;
 }
 
@@ -103,7 +103,7 @@ const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 struct Document {
     id: String,
     name: String,
-    status: i32,
+    status: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -487,7 +487,7 @@ print(f"Created app: {app_id}")
 import time
 while True:
     app = get_rag_app(app_id)
-    if all(doc["status"] >= 300 for doc in app["documents"]):
+    if all(doc["status"] == "indexed" for doc in app["documents"]):
         break
     print("Waiting for documents to be processed...")
     time.sleep(5)
@@ -527,7 +527,7 @@ async function completeWorkflow() {
   // 2. Wait for documents to be processed
   while (true) {
     const currentApp = await getRagApp(appId);
-    if (currentApp.documents.every(doc => doc.status >= 300)) {
+    if (currentApp.documents.every(doc => doc.status === 'indexed')) {
       break;
     }
     console.log('Waiting for documents to be processed...');

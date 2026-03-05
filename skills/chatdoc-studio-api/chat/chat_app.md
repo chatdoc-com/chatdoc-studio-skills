@@ -326,7 +326,7 @@ data: {"msg_id": "...", "content": "...", ...}
 
 - Document-based Q&A
 - Requires at least one document source
-- All documents must be parsed (status 300)
+- All documents must be parsed and in `indexed` status
 - Source tracing enabled by default
 
 ## Important Notes

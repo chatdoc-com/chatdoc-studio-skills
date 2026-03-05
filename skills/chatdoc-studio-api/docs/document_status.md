@@ -26,7 +26,7 @@ Documents must have status `chunked` or `indexed` before calling:
 ```python
 # Upload PDF to PDF Parser API
 response = upload_to_pdf_parser("document.pdf", wait=True)
-upload_id = response["id"]
+upload_id = response["upload_id"]
 status = response["status"]
 
 # Check if ready for JSON/Markdown/Excel extraction

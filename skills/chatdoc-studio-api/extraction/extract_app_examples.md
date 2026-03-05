@@ -343,6 +343,12 @@ console.log(`Upload ID: ${uploadId}`);
 
 ```rust
 use reqwest::multipart::{Form, Part};
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
+struct UploadData {
+    upload_id: String,
+}
 
 async fn upload_and_extract(
     app_id: &str,
@@ -365,7 +371,7 @@ async fn upload_and_extract(
         .send()
         .await?;
 
-    let api_response: ApiResponse<{ upload_id: String }> = response.json().await?;
+    let api_response: ApiResponse<UploadData> = response.json().await?;
     Ok(api_response.data.upload_id)
 }
 ```
