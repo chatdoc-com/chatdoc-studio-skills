@@ -341,6 +341,18 @@ async fn get_pdf_json(upload_id: &str, wait: bool) -> Result<JsonResponse, Box<d
                     sleep(Duration::from_secs(3)).await;
                     continue;
                 }
+                return Err(
+                    format!(
+                        "Failed to get PDF JSON: {} ({})",
+                        error_data.code,
+                        error_data.detail.unwrap_or_else(|| "Unknown error".to_string())
+                    )
+                    .into(),
+                );
+            }
+
+            if !response.status().is_success() {
+                return Err(format!("Request failed with status: {}", response.status()).into());
             }
 
             let api_response: ApiResponse<JsonResponse> = response.json().await?;
@@ -358,6 +370,18 @@ async fn get_pdf_json(upload_id: &str, wait: bool) -> Result<JsonResponse, Box<d
             if error_data.code == "not_parsed" {
                 return Err("Document parsing not completed".into());
             }
+            return Err(
+                format!(
+                    "Failed to get PDF JSON: {} ({})",
+                    error_data.code,
+                    error_data.detail.unwrap_or_else(|| "Unknown error".to_string())
+                )
+                .into(),
+            );
+        }
+
+        if !response.status().is_success() {
+            return Err(format!("Request failed with status: {}", response.status()).into());
         }
 
         let api_response: ApiResponse<JsonResponse> = response.json().await?;
@@ -438,6 +462,21 @@ interface ApiErrorResponse {
   detail?: string;
 }
 
+function parseAxiosApiError(data: unknown): ApiErrorResponse | null {
+  if (!data) return null;
+
+  if (typeof data === 'object' && 'code' in (data as Record<string, unknown>)) {
+    return data as ApiErrorResponse;
+  }
+
+  try {
+    const text = Buffer.from(data as ArrayBuffer).toString('utf-8');
+    return JSON.parse(text) as ApiErrorResponse;
+  } catch {
+    return null;
+  }
+}
+
 async function getPdfMarkdown(uploadId: string, outputPath: string, wait = true): Promise<void> {
   const url = `${BASE_URL}/pdf/parser/${uploadId}/markdown`;
 
@@ -454,8 +493,8 @@ async function getPdfMarkdown(uploadId: string, outputPath: string, wait = true)
         return;
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 400) {
-          const errorData = error.response.data as ApiErrorResponse;
-          if (errorData.code === 'not_parsed') {
+          const errorData = parseAxiosApiError(error.response.data);
+          if (errorData?.code === 'not_parsed') {
             console.log('Still parsing, waiting...');
             await new Promise(resolve => setTimeout(resolve, 3000));
             continue;
@@ -475,8 +514,8 @@ async function getPdfMarkdown(uploadId: string, outputPath: string, wait = true)
       fs.writeFileSync(outputPath, response.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
-        const errorData = error.response.data as ApiErrorResponse;
-        if (errorData.code === 'not_parsed') {
+        const errorData = parseAxiosApiError(error.response.data);
+        if (errorData?.code === 'not_parsed') {
           throw new Error('Document parsing not completed');
         }
       }
@@ -562,6 +601,21 @@ interface ApiErrorResponse {
   detail?: string;
 }
 
+function parseAxiosApiError(data: unknown): ApiErrorResponse | null {
+  if (!data) return null;
+
+  if (typeof data === 'object' && 'code' in (data as Record<string, unknown>)) {
+    return data as ApiErrorResponse;
+  }
+
+  try {
+    const text = Buffer.from(data as ArrayBuffer).toString('utf-8');
+    return JSON.parse(text) as ApiErrorResponse;
+  } catch {
+    return null;
+  }
+}
+
 async function getPdfExcel(uploadId: string, outputPath: string, wait = true): Promise<void> {
   const url = `${BASE_URL}/pdf/parser/${uploadId}/excel`;
 
@@ -578,8 +632,8 @@ async function getPdfExcel(uploadId: string, outputPath: string, wait = true): P
         return;
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 400) {
-          const errorData = error.response.data as ApiErrorResponse;
-          if (errorData.code === 'not_parsed') {
+          const errorData = parseAxiosApiError(error.response.data);
+          if (errorData?.code === 'not_parsed') {
             console.log('Still parsing, waiting...');
             await new Promise(resolve => setTimeout(resolve, 3000));
             continue;
@@ -599,8 +653,8 @@ async function getPdfExcel(uploadId: string, outputPath: string, wait = true): P
       fs.writeFileSync(outputPath, response.data);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 400) {
-        const errorData = error.response.data as ApiErrorResponse;
-        if (errorData.code === 'not_parsed') {
+        const errorData = parseAxiosApiError(error.response.data);
+        if (errorData?.code === 'not_parsed') {
           throw new Error('Document parsing not completed');
         }
       }

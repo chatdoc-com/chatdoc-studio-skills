@@ -586,6 +586,18 @@ async fn get_extraction_result(
                     sleep(Duration::from_secs(3)).await;
                     continue;
                 }
+                return Err(
+                    format!(
+                        "Failed to get extraction result: {} ({})",
+                        error_data.code,
+                        error_data.detail.unwrap_or_else(|| "Unknown error".to_string())
+                    )
+                    .into(),
+                );
+            }
+
+            if !response.status().is_success() {
+                return Err(format!("Request failed with status: {}", response.status()).into());
             }
 
             let result: ApiResponse<ExtractionResult> = response.json().await?;
@@ -611,6 +623,18 @@ async fn get_extraction_result(
             if error_data.code == "upload_still_extracting" {
                 return Err("Extraction still in progress".into());
             }
+            return Err(
+                format!(
+                    "Failed to get extraction result: {} ({})",
+                    error_data.code,
+                    error_data.detail.unwrap_or_else(|| "Unknown error".to_string())
+                )
+                .into(),
+            );
+        }
+
+        if !response.status().is_success() {
+            return Err(format!("Request failed with status: {}", response.status()).into());
         }
 
         let api_response: ApiResponse<ExtractionResult> = response.json().await?;
