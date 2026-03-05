@@ -173,7 +173,7 @@ Create a new conversation thread for the app.
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
 | 200 | - | Success |
-| 400 | `not_ready` | Documents not ready (status != 300) |
+| 400 | `not_ready` | Documents not ready (document status is not "indexed") |
 | 404 | `not_found` | App not found |
 
 ### 6. Get Conversations

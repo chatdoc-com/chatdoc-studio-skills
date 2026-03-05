@@ -37,7 +37,7 @@ Create a new content retrieval application.
 |-------|------|-------------|
 | `id` | string | Document ID |
 | `name` | string | Document name |
-| `status` | integer | Processing status |
+| `status` | string | Processing status |
 
 **Status Codes:**
 

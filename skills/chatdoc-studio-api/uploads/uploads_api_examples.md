@@ -127,8 +127,8 @@ async fn upload_file(file_path: &str) -> Result<UploadResponse, Box<dyn std::err
         Some("pdf") => "application/pdf",
         Some("doc") => "application/msword",
         Some("docx") => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        Some("md") => "application/markdown",
-        Some("txt") => "application/txt",
+        Some("md") => "text/markdown",
+        Some("txt") => "text/plain",
         _ => "application/octet-stream",
     };
 
@@ -369,28 +369,41 @@ print("Documents are being parsed in the background...")
 
 # 3. Wait for app to be ready (all documents processed)
 app_id = app['id']
-def wait_for_app_ready(app_id: str, timeout: int = 600) -> bool:
-    """Wait for all documents in the app to be ready."""
-    url = f"{BASE_URL}/chat/apps/{app_id}/status"
+def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
+    """Publish app and poll for completion.
+
+    The publish endpoint processes documents in the background.
+    You need to poll until it returns 200 (published successfully).
+    If you call it again after successful publication, you'll get
+    error code `already_published` (400 error).
+    """
+    url = f"{BASE_URL}/chat/apps/{app_id}/publish"
     headers = {"Authorization": f"Bearer {API_KEY}"}
+    try:
+        for attempt in range(max_retries):
+            response = requests.post(url, headers=headers)
 
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        result = response.json()["data"]
+            if response.status_code == 200:
+                print(f"✓ App published successfully!")
+                return True
 
-        if result["status"]:
-            print("App is ready! All documents processed.")
-            return True
-        else:
-            print(f"App processing... Upload ready: {result['upload_status']}")
-            time.sleep(5)
+            if response.status_code == 400:
+                error_data = response.json()
+                error_code = error_data.get("code")
 
-    print("Timeout waiting for app to be ready")
-    return False
+                if error_code == "already_published":
+                    print(f"✓ App already published!")
+                    return True
+                # Other errors - raise
+                response.raise_for_status()
 
-ready = wait_for_app_ready(app_id)
+            # Still processing (202 or other status), wait and retry
+            print(f"Publishing... ({attempt + 1}/{max_retries})")
+            time.sleep(delay)
+        return False # timeout
+    except Exception:
+      return False
+publish_app_with_retry(app_id)
 if ready:
     print("You can now start using the chat app!")
 ```
@@ -478,7 +491,7 @@ def upload_file_safe(file_path: str) -> dict | None:
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 400:
             error_data = e.response.json()
-            error_code = error_data.get("error", {}).get("code")
+            error_code = error_data.get("code")
             if error_code == "not_support_file_format":
                 print(f"Error: Unsupported file format for {file_path}")
             elif error_code == "file_too_large":
@@ -517,7 +530,7 @@ async function uploadFileSafe(filePath: string): Promise<UploadResponse | null> 
       const e = error as AxiosError<any>;
 
       if (e.response?.status === 400) {
-        const errorCode = e.response.data?.error?.code;
+        const errorCode = e.response.data?.code;
         if (errorCode === 'not_support_file_format') {
           console.log(`Error: Unsupported file format for ${filePath}`);
         } else if (errorCode === 'file_too_large') {

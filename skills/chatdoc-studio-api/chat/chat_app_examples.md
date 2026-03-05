@@ -549,7 +549,7 @@ def send_message(
             print("App not published. Publishing...")
             publish_app_with_retry(app_id)
             # Retry sending message after publish
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, params={"stream": stream})
 
     response.raise_for_status()
     return response.json()["data"]

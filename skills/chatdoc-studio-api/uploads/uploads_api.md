@@ -31,8 +31,8 @@ Upload a document file to your team.
 | PDF | `.pdf` | `application/pdf` |
 | DOC | `.doc` | `application/msword` |
 | DOCX | `.docx` | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` |
-| Markdown | `.md` | `application/markdown` |
-| Text | `.txt` | `application/txt` |
+| Markdown | `.md` | `text/markdown` |
+| Text | `.txt` | `text/plain` |
 
 **Response:**
 
