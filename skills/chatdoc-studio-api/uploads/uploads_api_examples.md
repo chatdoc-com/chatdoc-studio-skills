@@ -1,0 +1,535 @@
+# Uploads API - Code Examples
+
+This page contains code examples for the Uploads API in Python, TypeScript (server-side), Rust, and cURL.
+
+## Environment Setup
+
+Set up your environment variables:
+
+```bash
+export CHATDOC_STUDIO_BASE_URL="https://api.chatdoc.studio/v1"
+export CHATDOC_STUDIO_API_KEY="your-api-key-here"
+```
+
+## Upload File
+
+### Python
+
+```python
+import os
+import requests
+import time
+
+BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
+API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
+
+def upload_file(file_path: str) -> dict:
+    """Upload a file to the team."""
+    url = f"{BASE_URL}/uploads/"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    with open(file_path, "rb") as f:
+        files = {"file": f}
+        response = requests.post(url, headers=headers, files=files)
+        response.raise_for_status()
+        return response.json()["data"]
+
+# Usage
+result = upload_file("document.pdf")
+upload_id = result["upload_id"]
+print(f"Upload ID: {upload_id}")
+print(f"Status: {result['status']}")
+print(f"Name: {result['name']}")
+```
+
+### TypeScript (Server-side)
+
+```typescript
+import fs from 'fs';
+import FormData from 'form-data';
+import axios from 'axios';
+
+const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
+const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
+
+interface UploadResponse {
+  upload_id: string;
+  name: string;
+  file_type: string;
+  status: number;
+  created_at: number;
+}
+
+async function uploadFile(filePath: string): Promise<UploadResponse> {
+  const form = new FormData();
+  form.append('file', fs.createReadStream(filePath));
+
+  const response = await axios.post<{ data: UploadResponse }>(
+    `${BASE_URL}/uploads/`,
+    form,
+    {
+      headers: {
+        ...form.getHeaders(),
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    }
+  );
+
+  return response.data.data;
+}
+
+// Usage
+const result = await uploadFile('document.pdf');
+const uploadId = result.upload_id;
+console.log(`Upload ID: ${uploadId}`);
+console.log(`Status: ${result.status}`);
+console.log(`Name: ${result.name}`);
+```
+
+### Rust
+
+```rust
+use reqwest::multipart::{Form, Part};
+use reqwest::Client;
+use serde::Deserialize;
+
+const BASE_URL: &str = "https://api.chatdoc.studio/v1";
+
+#[derive(Debug, Deserialize)]
+struct UploadResponse {
+    #[serde(rename = "upload_id")]
+    upload_id: String,
+    name: String,
+    #[serde(rename = "file_type")]
+    file_type: String,
+    status: i32,
+    #[serde(rename = "created_at")]
+    created_at: i64,
+}
+
+async fn upload_file(file_path: &str) -> Result<UploadResponse, Box<dyn std::error::Error>> {
+    let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
+    let client = Client::new();
+
+    let file_bytes = std::fs::read(file_path)?;
+    let file_name = std::path::Path::new(file_path)
+        .file_name()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+
+    let file_part = Part::bytes(file_bytes)
+        .file_name(file_name.clone())
+        .mime_str("application/pdf")?;
+
+    let form = Form::new().part("file", file_part);
+
+    let response = client
+        .post(&format!("{}/uploads/", BASE_URL))
+        .header("Authorization", format!("Bearer {}", api_key))
+        .multipart(form)
+        .send()
+        .await?;
+
+    let api_response: ApiResponse<UploadResponse> = response.json().await?;
+    Ok(api_response.data)
+}
+
+// Usage
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let result = upload_file("document.pdf").await?;
+    println!("Upload ID: {}", result.upload_id);
+    println!("Status: {}", result.status);
+    println!("Name: {}", result.name);
+    Ok(())
+}
+```
+
+### cURL
+
+```bash
+# Upload a PDF file
+curl -X POST "${CHATDOC_STUDIO_BASE_URL}/uploads/" \
+  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
+  -F "file=@document.pdf"
+
+# Upload a DOCX file
+curl -X POST "${CHATDOC_STUDIO_BASE_URL}/uploads/" \
+  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
+  -F "file=@document.docx"
+
+# Upload a Markdown file
+curl -X POST "${CHATDOC_STUDIO_BASE_URL}/uploads/" \
+  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
+  -F "file=@document.md"
+```
+
+## Wait for Document Processing (Optional)
+
+**Note**: Since parsing is automatically triggered when you use the `upload_id` in an app, you can skip this step and create your app immediately. Use this only if you need to verify document status before using app features.
+
+### Python
+
+```python
+def wait_for_document_ready(upload_id: str, timeout: int = 300) -> dict:
+    """Wait for document to be fully processed (status == 300)."""
+    url = f"{BASE_URL}/uploads/{upload_id}"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        result = response.json()["data"]
+
+        status = result["status"]
+        if status == 300:
+            print("Document is ready!")
+            return result
+        elif status < 0:
+            raise Exception(f"Document processing failed with status: {status}")
+        else:
+            print(f"Document processing... Status: {status}")
+            time.sleep(5)
+
+    raise TimeoutError("Document processing timed out")
+
+# Usage
+upload_id = upload_file("document.pdf")["upload_id"]
+document = wait_for_document_ready(upload_id)
+print(f"Document ready: {document['name']}")
+```
+
+### TypeScript
+
+```typescript
+async function waitForDocumentReady(
+  uploadId: string,
+  timeout = 300000 // 5 minutes
+): Promise<UploadResponse> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const response = await axios.get<{ data: UploadResponse }>(
+      `${BASE_URL}/uploads/${uploadId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+        },
+      }
+    );
+
+    const result = response.data.data;
+
+    if (result.status === 300) {
+      console.log('Document is ready!');
+      return result;
+    } else if (result.status < 0) {
+      throw new Error(`Document processing failed with status: ${result.status}`);
+    } else {
+      console.log(`Document processing... Status: ${result.status}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+
+  throw new Error('Document processing timed out');
+}
+
+// Usage
+const uploadId = (await uploadFile('document.pdf')).upload_id;
+const document = await waitForDocumentReady(uploadId);
+console.log(`Document ready: ${document.name}`);
+```
+
+### cURL
+
+```bash
+# Check document status (you'll need to parse the JSON response)
+curl -X GET "${CHATDOC_STUDIO_BASE_URL}/uploads/F1CMSW" \
+  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}"
+```
+
+## Upload Multiple Files
+
+### Python
+
+```python
+from typing import List
+
+def upload_files(file_paths: List[str]) -> List[str]:
+    """Upload multiple files and return their upload IDs."""
+    upload_ids = []
+
+    for file_path in file_paths:
+        print(f"Uploading {file_path}...")
+        result = upload_file(file_path)
+        upload_id = result["upload_id"]
+        upload_ids.append(upload_id)
+        print(f"  Upload ID: {upload_id}")
+
+    return upload_ids
+
+# Usage
+files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+upload_ids = upload_files(files)
+
+print("All files uploaded:")
+for upload_id in upload_ids:
+    print(f"  - {upload_id}")
+
+# Now you can use these IDs when creating an app
+sources = [{"id": uid} for uid in upload_ids]
+print(f"Sources for app: {sources}")
+```
+
+### TypeScript
+
+```typescript
+async function uploadFiles(filePaths: string[]): Promise<string[]> {
+  const uploadIds: string[] = [];
+
+  for (const filePath of filePaths) {
+    console.log(`Uploading ${filePath}...`);
+    const result = await uploadFile(filePath);
+    const uploadId = result.upload_id;
+    uploadIds.push(uploadId);
+    console.log(`  Upload ID: ${uploadId}`);
+  }
+
+  return uploadIds;
+}
+
+// Usage
+const files = ['doc1.pdf', 'doc2.pdf', 'doc3.pdf'];
+const uploadIds = await uploadFiles(files);
+
+console.log('All files uploaded:');
+for (const id of uploadIds) {
+  console.log(`  - ${id}`);
+}
+
+// Now you can use these IDs when creating an app
+const sources = uploadIds.map(id => ({ id }));
+console.log(`Sources for app:`, sources);
+```
+
+## Complete Workflow Example
+
+### Python
+
+```python
+# Simplified workflow: Upload files -> Create Chat App -> Wait for app ready
+# Note: Parsing is triggered automatically when documents are referenced in the app!
+
+# 1. Upload multiple documents
+files = ["handbook.pdf", "policy.pdf", "faq.pdf"]
+upload_ids = upload_files(files)
+print(f"Uploaded {len(upload_ids)} files")
+
+# 2. Create Chat App immediately (parsing will be triggered automatically)
+def create_chat_app(name: str, instruction: str, sources: list) -> dict:
+    url = f"{BASE_URL}/chat/apps/"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    data = {
+        "name": name,
+        "instruction": instruction,
+        "use_case": "knowledge_base_qa",
+        "sources": sources,
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+    return response.json()["data"]
+
+sources = [{"id": uid} for uid in upload_ids]
+app = create_chat_app(
+    "Company Knowledge Base",
+    "You are a helpful assistant that answers questions about company policies and procedures.",
+    sources,
+)
+
+print(f"Chat App created: {app['id']}")
+print("Documents are being parsed in the background...")
+
+# 3. Wait for app to be ready (all documents processed)
+app_id = app['id']
+def wait_for_app_ready(app_id: str, timeout: int = 600) -> bool:
+    """Wait for all documents in the app to be ready (status == 300)."""
+    url = f"{BASE_URL}/chat/apps/{app_id}/status"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        result = response.json()["data"]
+
+        if result["status"]:
+            print("App is ready! All documents processed.")
+            return True
+        else:
+            print(f"App processing... Upload ready: {result['upload_status']}")
+            time.sleep(5)
+
+    print("Timeout waiting for app to be ready")
+    return False
+
+ready = wait_for_app_ready(app_id)
+if ready:
+    print("You can now start using the chat app!")
+```
+
+### TypeScript
+
+```typescript
+// Simplified workflow: Upload files -> Create Chat App -> Wait for app ready
+// Note: Parsing is triggered automatically when documents are referenced in the app!
+
+import { createChatApp } from './chat_app_examples'; // assuming you have this
+
+async function completeWorkflow() {
+  // 1. Upload multiple documents
+  const files = ['handbook.pdf', 'policy.pdf', 'faq.pdf'];
+  const uploadIds = await uploadFiles(files);
+  console.log(`Uploaded ${uploadIds.length} files`);
+
+  // 2. Create Chat App immediately (parsing will be triggered automatically)
+  const sources = uploadIds.map(id => ({ id }));
+  const app = await createChatApp({
+    name: 'Company Knowledge Base',
+    instruction: 'You are a helpful assistant that answers questions about company policies and procedures.',
+    use_case: 'knowledge_base_qa',
+    sources,
+  });
+
+  console.log(`Chat App created: ${app.id}`);
+  console.log('Documents are being parsed in the background...');
+
+  // 3. Wait for app to be ready (all documents processed)
+  const appId = app.id;
+  await waitForAppReady(appId);
+}
+
+async function waitForAppReady(appId: string, timeout = 600000): Promise<boolean> {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    const response = await axios.get<{ data: { status: boolean; upload_status: boolean } }>(
+      `${BASE_URL}/chat/apps/${appId}/status`,
+      {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+        },
+      }
+    );
+
+    const result = response.data.data;
+
+    if (result.status) {
+      console.log('App is ready! All documents processed.');
+      return true;
+    } else {
+      console.log(`App processing... Upload ready: ${result.upload_status}`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+
+  console.log('Timeout waiting for app to be ready');
+  return false;
+}
+
+completeWorkflow();
+```
+
+**Key Points:**
+1. Upload files and get `upload_id` values (status is 1)
+2. Create app immediately with the `upload_id` values
+3. Parsing is triggered automatically when documents are referenced
+4. Wait for app status before using chat/retrieval features
+
+## Error Handling
+
+### Python
+
+```python
+import requests
+
+def upload_file_safe(file_path: str) -> dict | None:
+    """Upload file with error handling."""
+    try:
+        result = upload_file(file_path)
+        return result
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 400:
+            error_data = e.response.json()
+            error_code = error_data.get("error", {}).get("code")
+            if error_code == "not_support_file_format":
+                print(f"Error: Unsupported file format for {file_path}")
+            elif error_code == "file_too_large":
+                print(f"Error: File {file_path} is too large")
+            elif error_code == "empty_file":
+                print(f"Error: File {file_path} is empty")
+            else:
+                print(f"Error: {error_data}")
+        elif e.response.status_code == 402:
+            print("Error: Insufficient credits. Please top up your account.")
+        else:
+            print(f"Unexpected error: {e}")
+        return None
+    except Exception as e:
+        print(f"Error uploading file: {e}")
+        return None
+
+# Usage
+result = upload_file_safe("document.pdf")
+if result:
+    print(f"Success: {result['upload_id']}")
+else:
+    print("Upload failed")
+```
+
+### TypeScript
+
+```typescript
+import axios, { AxiosError } from 'axios';
+
+async function uploadFileSafe(filePath: string): Promise<UploadResponse | null> {
+  try {
+    return await uploadFile(filePath);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const e = error as AxiosError<any>;
+
+      if (e.response?.status === 400) {
+        const errorCode = e.response.data?.error?.code;
+        if (errorCode === 'NOT_SUPPORT_FILE_FORMAT') {
+          console.log(`Error: Unsupported file format for ${filePath}`);
+        } else if (errorCode === 'FILE_TOO_LARGE') {
+          console.log(`Error: File ${filePath} is too large`);
+        } else if (errorCode === 'EMPTY_FILE') {
+          console.log(`Error: File ${filePath} is empty`);
+        } else {
+          console.log(`Error: ${e.response.data}`);
+        }
+      } else if (e.response?.status === 402) {
+        console.log('Error: Insufficient credits. Please top up your account.');
+      } else {
+        console.log(`Unexpected error: ${e.message}`);
+      }
+    } else {
+      console.log(`Error uploading file: ${error}`);
+    }
+    return null;
+  }
+}
+
+// Usage
+const result = await uploadFileSafe('document.pdf');
+if (result) {
+  console.log(`Success: ${result.upload_id}`);
+} else {
+  console.log('Upload failed');
+}
+```
