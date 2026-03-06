@@ -33,22 +33,22 @@ Retrieve a paginated list of all applications in your team.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `items` | array | Array of app objects |
-| `page` | integer | Current page number |
-| `size` | integer | Items per page |
-| `total` | integer | Total number of apps |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `items` | array | No | Array of app objects |
+| `page` | integer | No | Current page number |
+| `size` | integer | No | Items per page |
+| `total` | integer | No | Total number of apps |
 
 **App Object:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | App ID (alias_id) |
-| `name` | string | App name |
-| `app_type` | integer | App type (1=Chat, 2=Extract, 5=RAG) |
-| `created_at` | integer | Creation timestamp (Unix timestamp) |
-| `updated_at` | integer | Last update timestamp (Unix timestamp) |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | App ID |
+| `name` | string | No | App name |
+| `app_type` | integer | No | App type (1=Chat, 2=Extract, 5=RAG) |
+| `created_at` | integer | No | Creation timestamp (Unix timestamp) |
+| `updated_at` | integer | No | Last update timestamp (Unix timestamp) |
 
 **Status Codes:**
 
@@ -66,7 +66,7 @@ Delete an application by app_id. This operation permanently removes the app and 
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `app_id` | string | App ID (alias_id) |
+| `app_id` | string | App ID |
 
 **Response:** Empty data field on success
 
@@ -79,11 +79,11 @@ Delete an application by app_id. This operation permanently removes the app and 
 
 **Important Notes:**
 
-1. **App ID**: Use the `id` field (alias_id) from the Get Apps response. This is the public app identifier.
+1. **App ID**: Use the `id` field from the Get Apps response. This is the public app identifier.
 
 2. **Deletion Behavior**:
    - For Chat/RAG apps: Deletes all app versions and associated conversations
-   - For Extract apps: Soft deletes all app versions with the same alias_id
+   - For Extract apps: Soft deletes all app versions with the same app_id
 
 3. **Irreversible**: Deletion is permanent. Make sure you have backups if needed.
 
@@ -95,6 +95,6 @@ Delete an application by app_id. This operation permanently removes the app and 
 
 2. **Timestamp Format**: All timestamps are Unix timestamps (seconds since epoch).
 
-3. **App Identification**: The `id` field in the response is the alias_id - use this for all subsequent API calls.
+3. **App Identification**: The `id` field in the response - use this for all subsequent API calls.
 
 4. **Type Filtering**: The `app_type` field helps you distinguish between different app types when processing the response.
