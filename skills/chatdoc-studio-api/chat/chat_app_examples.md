@@ -504,20 +504,19 @@ def create_conversation(app_id: str) -> dict:
 # Usage
 conv = create_conversation("abc123")
 print(f"Conversation ID: {conv['id']}")
+print(f"Created At: {conv['created_at']}")
 ```
 
 ### TypeScript
 
 ```typescript
-interface Conversation {
+interface CreateConversationResponse {
   id: string;
-  app_id: string;
-  name: string;
   created_at: number;
 }
 
-async function createConversation(appId: string): Promise<Conversation> {
-  const response = await axios.post<{ data: Conversation }>(
+async function createConversation(appId: string): Promise<CreateConversationResponse> {
+  const response = await axios.post<{ data: CreateConversationResponse }>(
     `${BASE_URL}/chat/apps/${appId}/conversations`,
     {},
     {
@@ -532,6 +531,7 @@ async function createConversation(appId: string): Promise<Conversation> {
 // Usage
 const conv = await createConversation('abc123');
 console.log(`Conversation ID: ${conv.id}`);
+console.log(`Created At: ${conv.created_at}`);
 ```
 
 ### cURL
@@ -818,16 +818,22 @@ for conv in conversations:
 ### TypeScript
 
 ```typescript
+interface ConversationSummary {
+  id: string;
+  name: string;
+  created_at: number;
+}
+
 async function getConversations(
   appId: string,
   startAt?: number,
   endAt?: number
-): Promise<Conversation[]> {
+): Promise<ConversationSummary[]> {
   const params: Record<string, number> = {};
   if (startAt) params.start_at = startAt;
   if (endAt) params.end_at = endAt;
 
-  const response = await axios.get<{ data: Conversation[] }>(
+  const response = await axios.get<{ data: ConversationSummary[] }>(
     `${BASE_URL}/chat/apps/${appId}/conversations`,
     {
       params,

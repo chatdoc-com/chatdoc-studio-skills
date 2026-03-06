@@ -167,8 +167,7 @@ Create a new conversation thread for the app.
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | Conversation ID |
-| `app_id` | string | App ID |
-| `name` | string | Conversation name |
+| `created_at` | integer | Creation timestamp |
 
 **Status Codes:**
 
