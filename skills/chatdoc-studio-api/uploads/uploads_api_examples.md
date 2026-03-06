@@ -384,30 +384,28 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     """
     url = f"{BASE_URL}/chat/apps/{app_id}/publish"
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    try:
-        for attempt in range(max_retries):
-            response = requests.post(url, headers=headers)
+    for attempt in range(max_retries):
+        response = requests.post(url, headers=headers)
 
-            if response.status_code == 200:
-                print(f"✓ App published successfully!")
+        if response.status_code == 200:
+            print(f"✓ App published successfully!")
+            return True
+
+        if response.status_code == 400:
+            error_data = response.json()
+            error_code = error_data.get("code")
+
+            if error_code == "already_published":
+                print(f"✓ App already published!")
                 return True
+            # Other errors - raise
+            response.raise_for_status()
 
-            if response.status_code == 400:
-                error_data = response.json()
-                error_code = error_data.get("code")
+        # Still processing (202 or other status), wait and retry
+        print(f"Publishing... ({attempt + 1}/{max_retries})")
+        time.sleep(delay)
 
-                if error_code == "already_published":
-                    print(f"✓ App already published!")
-                    return True
-                # Other errors - raise
-                response.raise_for_status()
-
-            # Still processing (202 or other status), wait and retry
-            print(f"Publishing... ({attempt + 1}/{max_retries})")
-            time.sleep(delay)
-        return False  # timeout
-    except Exception:
-        return False
+    return False  # timeout
 
 ready = publish_app_with_retry(app_id)
 if ready:
@@ -420,6 +418,7 @@ if ready:
 // Simplified workflow: Upload files -> Create Chat App -> Wait for app ready
 // Note: Parsing is triggered automatically when documents are referenced in the app!
 
+import axios from 'axios';
 import { createChatApp } from './chat_app_examples'; // assuming you have this
 
 async function completeWorkflow() {
@@ -447,26 +446,39 @@ async function completeWorkflow() {
 
 async function waitForAppReady(appId: string, timeout = 600000): Promise<boolean> {
   const startTime = Date.now();
+  const pollIntervalMs = 5000;
+  const url = `${BASE_URL}/chat/apps/${appId}/publish`;
 
   while (Date.now() - startTime < timeout) {
-    const response = await axios.get<{ data: { status: boolean; upload_status: boolean } }>(
-      `${BASE_URL}/chat/apps/${appId}/status`,
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-        },
+    try {
+      const response = await axios.post<{ code: string }>(
+        url,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log('App is ready! All documents processed.');
+        return true;
       }
-    );
-
-    const result = response.data.data;
-
-    if (result.status) {
-      console.log('App is ready! All documents processed.');
-      return true;
-    } else {
-      console.log(`App processing... Upload ready: ${result.upload_status}`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const code = (error.response.data as { code?: string } | undefined)?.code;
+        if (code === 'already_published') {
+          console.log('App is ready! All documents processed.');
+          return true;
+        }
+      } else {
+        throw error;
+      }
     }
+
+    console.log(`App processing... (${Math.floor((Date.now() - startTime) / 1000)}s elapsed)`);
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
   }
 
   console.log('Timeout waiting for app to be ready');

@@ -107,7 +107,6 @@ struct UploadData {
 #[derive(Debug, Deserialize)]
 struct ApiResponse<T> {
     data: T,
-    error: Option<serde_json::Value>,
 }
 
 async fn upload_pdf(

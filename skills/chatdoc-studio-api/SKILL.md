@@ -158,10 +158,10 @@ API calls are subject to rate limits based on your subscription plan. HTTP 429 s
 
 1. Obtain an API Key from the ChatDOC Studio console
 2. Configure environment variables
-3. **Upload documents** (for Chat/RAG/Extract Apps) using the Uploads API
-4. **Immediately create your app** using the upload IDs (parsing is auto-triggered when referenced)
-5. Wait for app to be ready before using app features (chat/retrieval/extraction)
-6. Review the module's documentation and examples
+3. Review the module's documentation and examples
+4. **Upload documents** (for Chat/RAG/Extract Apps) using the Uploads API
+5. **Immediately create your app** using the upload IDs (parsing is auto-triggered when referenced)
+6. Wait for app to be ready before using app features (chat/retrieval/extraction)
 7. Integrate into your application
 
 ### Quick Start Examples

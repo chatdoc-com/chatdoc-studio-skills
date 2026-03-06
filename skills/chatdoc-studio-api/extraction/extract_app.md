@@ -222,9 +222,9 @@ Re-extract a document using the app's current schema.
 
 ## Important Notes
 
-1. **Document Status**: Documents need `status > 0` for upload; the system will automatically trigger parsing if needed
+1. **Document Status**: Documents need a non-failed status (`status != "failed"`) for upload; the system will automatically trigger parsing if needed
 2. **Supported File Types**: PDF, DOC, and DOCX files are supported
 3. **Asynchronous Processing**: Extraction is asynchronous; poll the extraction endpoint for results
 4. **Schema Validation**: The schema must be a valid JSON Schema; use validation tools before creating the app
 5. **Re-extraction**: Use `extract-again` to re-extract with updated schema or for failed extractions
-6. **Error Handling**: Check the `status` field; negative values indicate errors (see status codes above)
+6. **Error Handling**: Check the extraction `status` field; negative values indicate errors (see status codes above)

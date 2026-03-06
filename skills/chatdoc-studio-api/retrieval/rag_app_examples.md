@@ -498,10 +498,16 @@ print(f"Created app: {app_id}")
 
 # 2. Wait for documents to be processed (poll status)
 import time
+timeout = 300  # 5 minutes
+start_time = time.time()
 while True:
     app = get_rag_app(app_id)
+    if any(doc["status"] == "failed" for doc in app["documents"]):
+        raise RuntimeError("One or more documents failed to process.")
     if all(doc["status"] == "indexed" for doc in app["documents"]):
         break
+    if time.time() - start_time > timeout:
+        raise TimeoutError("Timed out waiting for documents to be processed.")
     print("Waiting for documents to be processed...")
     time.sleep(5)
 
@@ -537,14 +543,28 @@ async function completeWorkflow() {
   const appId = app.id;
   console.log(`Created app: ${appId}`);
 
-  // 2. Wait for documents to be processed
+  // 2. Wait for documents to be processed (with timeout and failure handling)
+  const pollIntervalMs = 5000;
+  const maxWaitMs = 5 * 60 * 1000; // 5 minutes
+  const startTime = Date.now();
+
   while (true) {
     const currentApp = await getRagApp(appId);
+
+    if (currentApp.documents.some(doc => doc.status === 'failed')) {
+      throw new Error('One or more documents failed to process.');
+    }
+
     if (currentApp.documents.every(doc => doc.status === 'indexed')) {
       break;
     }
+
+    if (Date.now() - startTime > maxWaitMs) {
+      throw new Error('Timed out waiting for documents to be processed.');
+    }
+
     console.log('Waiting for documents to be processed...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
   }
 
   console.log('All documents ready!');

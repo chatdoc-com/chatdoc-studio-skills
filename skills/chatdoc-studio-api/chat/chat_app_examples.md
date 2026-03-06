@@ -455,9 +455,9 @@ for i in {1..30}; do
   RESPONSE=$(curl -s -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123/publish" \
     -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}")
 
-  STATUS=$(echo $RESPONSE | jq -r '.error.code // empty')
+  STATUS=$(echo "$RESPONSE" | jq -r '.code // empty')
 
-  if [ "$STATUS" = "already_published" ] || [ "$STATUS" = "empty" ]; then
+  if [ "$STATUS" = "success" ] || [ "$STATUS" = "already_published" ]; then
     echo "✓ App published!"
     break
   fi
@@ -492,6 +492,7 @@ interface Conversation {
   id: string;
   app_id: string;
   name: string;
+  created_at: number;
 }
 
 async function createConversation(appId: string): Promise<Conversation> {
@@ -545,7 +546,7 @@ def send_message(
         data["conversation_id"] = conversation_id
 
     # Try sending message first
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data, params={"stream": stream})
 
     # Check if app needs to be published
     if response.status_code == 400:
