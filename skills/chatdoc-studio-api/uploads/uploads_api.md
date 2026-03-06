@@ -65,7 +65,7 @@ If the document status is not `indexed` when referenced in an app, the system wi
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Success |
+| 201 | - | Success |
 | 400 | `not_support_file_format` | Unsupported file type |
 | 400 | `file_too_large` | File size exceeds limit |
 | 400 | `empty_file` | File is empty |
