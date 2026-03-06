@@ -25,21 +25,21 @@ Upload a PDF document for parsing.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `upload_id` | string | Document upload ID |
-| `name` | string | Document name |
-| `status` | string | Document processing status: `chunking`, `chunked`, `indexed`, `failed` |
-| `markdown` | string | (if `wait=true`) Parsed markdown content |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `created_at` | integer | No | Upload timestamp |
+| `file_type` | string | No | File type (`pdf`) |
+| `markdown` | string | No | Parsed markdown content (typically empty when `wait=false`) |
+| `name` | string | No | Document name |
+| `status` | string | No | Document processing status: `chunking`, `chunked`, `indexed`, `failed` |
+| `upload_id` | string | No | Document upload ID |
 
 **Status Codes:**
 
 | Code | Description |
 |------|-------------|
-| 200 | Success |
-| 400 | Invalid file format (only PDF supported) |
-| 413 | File too large |
-| 415 | Unsupported media type |
+| 201 | Success |
+| 400 | Bad request (for example invalid file or request parameters) |
 
 ### 2. Get JSON
 
@@ -55,10 +55,13 @@ Retrieve parsed document as structured JSON.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `document` | object | Document metadata (id, name, create_time) |
-| `elements` | array | Parsed elements (paragraphs, tables, images, etc.) |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `document` | object | No | Document metadata |
+| `document.id` | string | No | Document ID |
+| `document.name` | string | No | Document name |
+| `document.create_time` | integer | No | Document create/upload timestamp |
+| `elements` | array | No | Parsed elements (paragraphs, tables, images, etc.) |
 
 **Element Types:**
 
@@ -75,8 +78,7 @@ Retrieve parsed document as structured JSON.
 | Code | Description |
 |------|-------------|
 | 200 | Success |
-| 400 | Document not ready (status is `chunking`) |
-| 404 | Document not found |
+| 400 | Bad request syntax or unsupported method |
 
 ### 3. Get Markdown
 

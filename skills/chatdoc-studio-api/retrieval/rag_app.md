@@ -14,30 +14,30 @@ The Content Retrieval App API enables semantic search and content retrieval from
 
 Create a new content retrieval application.
 
-**Endpoint:** `POST /rag/apps/`
+**Endpoint:** `POST /rag/apps`
 
 **Request:**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | Yes | App name (1-30 characters) |
-| `sources` | array | Yes | Array of `{"id": "upload_id"}` objects (max 50) |
+| `sources` | array | Yes | Array of `{"id": "upload_id"}` objects (max 300) |
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | App ID |
-| `name` | string | App name |
-| `documents` | array | Connected documents |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | App ID |
+| `name` | string | No | App name |
+| `documents` | array | No | Connected documents |
 
 **Document Object:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Document ID |
-| `name` | string | Document name |
-| `status` | string | Processing status |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | Document ID |
+| `name` | string | No | Document name |
+| `status` | string | No | Processing status |
 
 **Status Codes:**
 
@@ -62,17 +62,18 @@ Retrieve app details.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | App ID |
-| `name` | string | App name |
-| `documents` | array | Connected documents |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | App ID |
+| `name` | string | No | App name |
+| `documents` | array | No | Connected documents |
 
 **Status Codes:**
 
-| HTTP Code | Error Code | Description |
-|-----------|------------|-------------|
-| 200 | - | Success |
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 400 | Bad request syntax or unsupported method |
 | 404 | `not_found` | App not found |
 
 ### 3. Update App
@@ -92,9 +93,15 @@ Update app configuration and documents.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `name` | string | Yes | App name (1-30 characters) |
-| `sources` | array | Yes | Array of `{"id": "upload_id"}` objects (max 50) |
+| `sources` | array | Yes | Array of `{"id": "upload_id"}` objects (max 300) |
 
-**Response:** Updated app object
+**Response:**
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | App ID |
+| `name` | string | No | App name |
+| `documents` | array | No | Connected documents |
 
 **Status Codes:**
 
@@ -138,21 +145,32 @@ Execute a semantic search query to retrieve relevant content.
 
 **Response:** Array of retrieval results
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `upload_id` | string | Source document ID |
-| `document_name` | string | Source document name |
-| `elements` | array | Retrieved content elements |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `upload_id` | string | No | Source document ID |
+| `document_name` | string | No | Source document name |
+| `elements` | array | No | Retrieved content elements |
 
 **Element Object:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Element type: `paragraph`, `table`, etc. |
-| `content` | object | Element content |
-| `page` | array[int] | Page numbers |
-| `index` | integer | Element index |
-| `markdown` | string | Markdown representation |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `index` | integer | No | Element index |
+| `type` | string | No | Element type: `paragraph`, `table`, `figure`, `shape`, `image`, `page_header`, `page_footer` |
+| `page` | array[int] | No | Page numbers |
+| `outline` | object | No | Element bounding boxes |
+| `is_chapter_title` | boolean | No | Whether this element is a chapter title (default: `false`) |
+| `parent_chapter` | integer | No | Parent chapter index (default: `-1`) |
+| `rotation` | number | No | Rotation angle in degrees (default: `0`) |
+| `text` | string | No | Text content (for `paragraph`, `figure`, `shape`, `page_header`, `page_footer`) |
+| `markdown` | string | Yes | Markdown content (for `paragraph`, `figure`, `shape`, `table`, `page_header`, `page_footer`) |
+| `cells` | object | No | Table cell data (for `table`) |
+| `grid` | object | No | Table grid definition (for `table`) |
+| `title` | string | No | Table title text (for `table`) |
+| `title_index` | integer | No | Table title element index (for `table`) |
+| `merged` | array | No | Merged table cell regions (for `table`) |
+
+**Note:** `elements` is a union type. Different element types include different subsets of the fields above.
 
 **Status Codes:**
 
@@ -162,7 +180,6 @@ Execute a semantic search query to retrieve relevant content.
 | 400 | `invalid_retrieval_mode` | Invalid retrieval mode |
 | 400 | `retrieval_failed` | Retrieval operation failed |
 | 404 | `not_found` | App not found |
-| 409 | `training` | App is still training |
 
 ## Important Notes
 

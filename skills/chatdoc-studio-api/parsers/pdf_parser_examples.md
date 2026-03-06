@@ -18,7 +18,6 @@ export CHATDOC_STUDIO_API_KEY="your-api-key-here"
 ```python
 import os
 import requests
-from pathlib import Path
 
 BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
 API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
@@ -37,13 +36,19 @@ def upload_pdf(file_path: str, wait: bool = True) -> dict:
 
 # Usage
 result = upload_pdf("document.pdf")
-print(f"Upload ID: {result['upload_id']}, Status: {result['status']}")
+print(
+    f"Upload ID: {result['upload_id']}, "
+    f"Type: {result['file_type']}, "
+    f"Status: {result['status']}, "
+    f"Created At: {result['created_at']}"
+)
 ```
 
 ### TypeScript (Server-side)
 
 ```typescript
-import fs from 'fs';
+// npm i axios form-data
+import * as fs from 'node:fs';
 import FormData from 'form-data';
 import axios from 'axios';
 
@@ -52,10 +57,12 @@ const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
 
 interface UploadResponse {
   data: {
+    created_at: number;
+    file_type: string;
     upload_id: string;
     name: string;
     status: string;
-    markdown?: string;
+    markdown: string;
   };
 }
 
@@ -82,8 +89,14 @@ async function uploadPDF(
 }
 
 // Usage
-const result = await uploadPDF('document.pdf');
-console.log(`Upload ID: ${result.upload_id}, Status: ${result.status}`);
+async function main(): Promise<void> {
+  const result = await uploadPDF('document.pdf');
+  console.log(
+    `Upload ID: ${result.upload_id}, Type: ${result.file_type}, Status: ${result.status}, Created At: ${result.created_at}`
+  );
+}
+
+main().catch(console.error);
 ```
 
 ### Rust
@@ -98,10 +111,12 @@ const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
 #[derive(Debug, Deserialize)]
 struct UploadData {
+    created_at: i64,
+    file_type: String,
     upload_id: String,
     name: String,
     status: String,
-    markdown: Option<String>,
+    markdown: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -140,7 +155,10 @@ async fn upload_pdf(
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let result = upload_pdf("document.pdf", true).await?;
-    println!("Upload ID: {}, Status: {}", result.upload_id, result.status);
+    println!(
+        "Upload ID: {}, Type: {}, Status: {}, Created At: {}",
+        result.upload_id, result.file_type, result.status, result.created_at
+    );
     Ok(())
 }
 ```
@@ -277,15 +295,19 @@ async function getPdfJson(uploadId: string, wait = true): Promise<JsonResponse> 
 }
 
 // Usage - wait for completion
-const data = await getPdfJson('F1CMSW', true);
-console.log(`Document: ${data.document.name}`);
-console.log(`Elements: ${data.elements.length}`);
+async function main(): Promise<void> {
+  const data = await getPdfJson('F1CMSW', true);
+  console.log(`Document: ${data.document.name}`);
+  console.log(`Elements: ${data.elements.length}`);
+}
+
+main().catch(console.error);
 ```
 
 ### Rust
 
 ```rust
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde::Deserialize;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -338,7 +360,7 @@ async fn get_pdf_json(upload_id: &str, wait: bool) -> Result<JsonResponse, Box<d
                 .send()
                 .await?;
 
-            if response.status() == 400 {
+            if response.status() == StatusCode::BAD_REQUEST {
                 let error_data: ApiErrorResponse = response.json().await?;
                 if error_data.code == "not_parsed" {
                     println!("Still parsing, waiting...");
@@ -369,7 +391,7 @@ async fn get_pdf_json(upload_id: &str, wait: bool) -> Result<JsonResponse, Box<d
             .send()
             .await?;
 
-        if response.status() == 400 {
+        if response.status() == StatusCode::BAD_REQUEST {
             let error_data: ApiErrorResponse = response.json().await?;
             if error_data.code == "not_parsed" {
                 return Err("Document parsing not completed".into());
@@ -456,7 +478,8 @@ get_pdf_markdown("F1CMSW", "output.md", wait=True)
 
 ```typescript
 import axios from 'axios';
-import fs from 'fs';
+import { Buffer } from 'node:buffer';
+import * as fs from 'node:fs';
 
 const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
 const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
@@ -529,7 +552,11 @@ async function getPdfMarkdown(uploadId: string, outputPath: string, wait = true)
 }
 
 // Usage - wait for completion
-await getPdfMarkdown('F1CMSW', 'output.md', true);
+async function main(): Promise<void> {
+  await getPdfMarkdown('F1CMSW', 'output.md', true);
+}
+
+main().catch(console.error);
 ```
 
 ### cURL
@@ -595,7 +622,8 @@ get_pdf_excel("F1CMSW", "output.xlsx", wait=True)
 
 ```typescript
 import axios from 'axios';
-import fs from 'fs';
+import { Buffer } from 'node:buffer';
+import * as fs from 'node:fs';
 
 const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
 const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
@@ -668,7 +696,11 @@ async function getPdfExcel(uploadId: string, outputPath: string, wait = true): P
 }
 
 // Usage - wait for completion
-await getPdfExcel('F1CMSW', 'output.xlsx', true);
+async function main(): Promise<void> {
+  await getPdfExcel('F1CMSW', 'output.xlsx', true);
+}
+
+main().catch(console.error);
 ```
 
 ### cURL

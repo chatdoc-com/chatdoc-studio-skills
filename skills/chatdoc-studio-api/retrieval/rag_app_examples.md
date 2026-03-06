@@ -24,7 +24,7 @@ API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
 
 def create_rag_app(name: str, sources: list[dict]) -> dict:
     """Create a new content retrieval app."""
-    url = f"{BASE_URL}/rag/apps/"
+    url = f"{BASE_URL}/rag/apps"
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
     data = {
@@ -73,7 +73,7 @@ async function createRagApp(
   sources: Array<{ id: string }>
 ): Promise<RagAppResponse> {
   const response = await axios.post<{ data: RagAppResponse }>(
-    `${BASE_URL}/rag/apps/`,
+    `${BASE_URL}/rag/apps`,
     { name, sources },
     {
       headers: {
@@ -85,9 +85,13 @@ async function createRagApp(
 }
 
 // Usage
-const app = await createRagApp('Document Search', [{ id: 'F1CMSW' }]);
-console.log(`App ID: ${app.id}`);
-console.log(`Documents: ${app.documents.length}`);
+async function main(): Promise<void> {
+  const app = await createRagApp('Document Search', [{ id: 'F1CMSW' }]);
+  console.log(`App ID: ${app.id}`);
+  console.log(`Documents: ${app.documents.length}`);
+}
+
+main().catch(console.error);
 ```
 
 ### Rust
@@ -95,7 +99,6 @@ console.log(`Documents: ${app.documents.length}`);
 ```rust
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
@@ -143,7 +146,7 @@ async fn create_rag_app(
     let request = CreateRagAppRequest { name, sources };
 
     let response = client
-        .post(&format!("{}/rag/apps/", BASE_URL))
+        .post(&format!("{}/rag/apps", BASE_URL))
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&request)
         .send()
@@ -157,7 +160,7 @@ async fn create_rag_app(
 ### cURL
 
 ```bash
-curl -X POST "${CHATDOC_STUDIO_BASE_URL}/rag/apps/" \
+curl -X POST "${CHATDOC_STUDIO_BASE_URL}/rag/apps" \
   -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -171,6 +174,12 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/rag/apps/" \
 ### Python
 
 ```python
+import os
+import requests
+
+BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
+API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
+
 def get_rag_app(app_id: str) -> dict:
     """Get app details."""
     url = f"{BASE_URL}/rag/apps/{app_id}"
@@ -189,6 +198,21 @@ for doc in app["documents"]:
 ### TypeScript
 
 ```typescript
+import axios from 'axios';
+
+const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
+const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
+
+interface RagAppResponse {
+  id: string;
+  name: string;
+  documents: Array<{
+    id: string;
+    name: string;
+    status: string;
+  }>;
+}
+
 async function getRagApp(appId: string): Promise<RagAppResponse> {
   const response = await axios.get<{ data: RagAppResponse }>(
     `${BASE_URL}/rag/apps/${appId}`,
@@ -202,11 +226,15 @@ async function getRagApp(appId: string): Promise<RagAppResponse> {
 }
 
 // Usage
-const app = await getRagApp('abc123');
-console.log(`App: ${app.name}`);
-for (const doc of app.documents) {
-  console.log(`  - ${doc.name} (status: ${doc.status})`);
+async function main(): Promise<void> {
+  const app = await getRagApp('abc123');
+  console.log(`App: ${app.name}`);
+  for (const doc of app.documents) {
+    console.log(`  - ${doc.name} (status: ${doc.status})`);
+  }
 }
+
+main().catch(console.error);
 ```
 
 ### cURL
@@ -221,6 +249,12 @@ curl -X GET "${CHATDOC_STUDIO_BASE_URL}/rag/apps/abc123" \
 ### Python
 
 ```python
+import os
+import requests
+
+BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
+API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
+
 def update_rag_app(app_id: str, name: str, sources: list[dict]) -> dict:
     """Update app configuration and documents."""
     url = f"{BASE_URL}/rag/apps/{app_id}"
@@ -246,6 +280,21 @@ app = update_rag_app(
 ### TypeScript
 
 ```typescript
+import axios from 'axios';
+
+const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
+const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
+
+interface RagAppResponse {
+  id: string;
+  name: string;
+  documents: Array<{
+    id: string;
+    name: string;
+    status: string;
+  }>;
+}
+
 async function updateRagApp(
   appId: string,
   name: string,
@@ -264,11 +313,16 @@ async function updateRagApp(
 }
 
 // Usage
-const app = await updateRagApp(
-  'abc123',
-  'Updated Document Search',
-  [{ id: 'F1CMSW' }, { id: 'F2DNE9' }]
-);
+async function main(): Promise<void> {
+  const app = await updateRagApp(
+    'abc123',
+    'Updated Document Search',
+    [{ id: 'F1CMSW' }, { id: 'F2DNE9' }]
+  );
+  console.log(`Updated app: ${app.id}`);
+}
+
+main().catch(console.error);
 ```
 
 ### cURL
@@ -288,6 +342,12 @@ curl -X PUT "${CHATDOC_STUDIO_BASE_URL}/rag/apps/abc123" \
 ### Python
 
 ```python
+import os
+import requests
+
+BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
+API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
+
 def retrieval_query(
     app_id: str,
     query: str,
@@ -318,12 +378,18 @@ results = retrieval_query(
 for result in results:
     print(f"Document: {result['document_name']}")
     for element in result["elements"]:
-        print(f"  [{element['type']}] {element['markdown'][:100]}...")
+        element_text = element.get("markdown") or element.get("text") or ""
+        print(f"  [{element['type']}] {element_text[:100]}...")
 ```
 
 ### TypeScript
 
 ```typescript
+import axios from 'axios';
+
+const BASE_URL = process.env.CHATDOC_STUDIO_BASE_URL || 'https://api.chatdoc.studio/v1';
+const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
+
 interface RetrievalRequest {
   query: string;
   retrieval_mode?: 'basic' | 'contextual' | 'expanded';
@@ -331,11 +397,20 @@ interface RetrievalRequest {
 }
 
 interface Element {
-  type: string;
-  content: any;
-  page: number[];
   index: number;
-  markdown: string;
+  type: string;
+  page: number[];
+  outline: Record<string, number[][]>;
+  is_chapter_title?: boolean;
+  parent_chapter?: number;
+  rotation?: number;
+  text?: string;
+  markdown?: string | null;
+  cells?: Record<string, { text: string }>;
+  grid?: Record<string, Array<{ rows?: number[]; columns?: number[] }>>;
+  title?: string;
+  title_index?: number;
+  merged?: number[][][];
 }
 
 interface RetrievalResult {
@@ -367,18 +442,23 @@ async function retrievalQuery(
 }
 
 // Usage
-const results = await retrievalQuery(
-  'abc123',
-  'What are the payment terms?',
-  'contextual'
-);
+async function main(): Promise<void> {
+  const results = await retrievalQuery(
+    'abc123',
+    'What are the payment terms?',
+    'contextual'
+  );
 
-for (const result of results) {
-  console.log(`Document: ${result.document_name}`);
-  for (const element of result.elements) {
-    console.log(`  [${element.type}] ${element.markdown.substring(0, 100)}...`);
+  for (const result of results) {
+    console.log(`Document: ${result.document_name}`);
+    for (const element of result.elements) {
+      const elementText = element.markdown ?? element.text ?? '';
+      console.log(`  [${element.type}] ${elementText.substring(0, 100)}...`);
+    }
   }
 }
+
+main().catch(console.error);
 ```
 
 ### Rust
@@ -400,12 +480,21 @@ struct RetrievalRequest<'a> {
 
 #[derive(Debug, Deserialize)]
 struct Element {
+    index: i32,
     #[serde(rename = "type")]
     element_type: String,
-    content: serde_json::Value,
     page: Vec<i32>,
-    index: i32,
-    markdown: String,
+    outline: serde_json::Value,
+    is_chapter_title: Option<bool>,
+    parent_chapter: Option<i32>,
+    rotation: Option<f64>,
+    text: Option<String>,
+    markdown: Option<String>,
+    cells: Option<serde_json::Value>,
+    grid: Option<serde_json::Value>,
+    title: Option<String>,
+    title_index: Option<i32>,
+    merged: Option<Vec<Vec<Vec<i32>>>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -526,7 +615,8 @@ for query in queries:
     for result in results:
         print(f"  From: {result['document_name']}")
         for element in result["elements"]:
-            print(f"    - {element['markdown'][:80]}...")
+            element_text = element.get("markdown") or element.get("text") or ""
+            print(f"    - {element_text[:80]}...")
 ```
 
 ### TypeScript
@@ -582,11 +672,12 @@ async function completeWorkflow() {
     for (const result of results) {
       console.log(`  From: ${result.document_name}`);
       for (const element of result.elements) {
-        console.log(`    - ${element.markdown.substring(0, 80)}...`);
+        const elementText = element.markdown ?? element.text ?? '';
+        console.log(`    - ${elementText.substring(0, 80)}...`);
       }
     }
   }
 }
 
-completeWorkflow();
+completeWorkflow().catch(console.error);
 ```
