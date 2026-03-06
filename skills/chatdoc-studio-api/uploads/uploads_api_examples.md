@@ -184,91 +184,6 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/uploads/" \
   -F "file=@document.md"
 ```
 
-## Wait for Document Processing (Optional)
-
-**Note**: Since parsing is automatically triggered when you use the `upload_id` in an app, you can skip this step and create your app immediately. Use this only if you need to verify document status before using app features.
-
-### Python
-
-```python
-def wait_for_document_ready(upload_id: str, timeout: int = 300) -> dict:
-    """Wait for document to be fully processed (status == "indexed")."""
-    url = f"{BASE_URL}/uploads/{upload_id}"
-    headers = {"Authorization": f"Bearer {API_KEY}"}
-
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        result = response.json()["data"]
-
-        status = result["status"]
-        if status == "indexed":
-            print("Document is ready!")
-            return result
-        elif status == "failed":
-            raise Exception(f"Document processing failed with status: {status}")
-        else:
-            print(f"Document processing... Status: {status}")
-            time.sleep(5)
-
-    raise TimeoutError("Document processing timed out")
-
-# Usage
-upload_id = upload_file("document.pdf")["upload_id"]
-document = wait_for_document_ready(upload_id)
-print(f"Document ready: {document['name']}")
-```
-
-### TypeScript
-
-```typescript
-async function waitForDocumentReady(
-  uploadId: string,
-  timeout = 300000 // 5 minutes
-): Promise<UploadResponse> {
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < timeout) {
-    const response = await axios.get<{ data: UploadResponse }>(
-      `${BASE_URL}/uploads/${uploadId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${API_KEY}`,
-        },
-      }
-    );
-
-    const result = response.data.data;
-
-    if (result.status === 'indexed') {
-      console.log('Document is ready!');
-      return result;
-    } else if (result.status === 'failed') {
-      throw new Error(`Document processing failed with status: ${result.status}`);
-    } else {
-      console.log(`Document processing... Status: ${result.status}`);
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-  }
-
-  throw new Error('Document processing timed out');
-}
-
-// Usage
-const uploadId = (await uploadFile('document.pdf')).upload_id;
-const document = await waitForDocumentReady(uploadId);
-console.log(`Document ready: ${document.name}`);
-```
-
-### cURL
-
-```bash
-# Check document status (you'll need to parse the JSON response)
-curl -X GET "${CHATDOC_STUDIO_BASE_URL}/uploads/F1CMSW" \
-  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}"
-```
-
 ## Upload Multiple Files
 
 ### Python
@@ -378,7 +293,7 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     """Publish app and poll for completion.
 
     The publish endpoint processes documents in the background.
-    You need to poll until it returns 200 (published successfully).
+    You need to poll until it returns success (usually 201).
     If you call it again after successful publication, you'll get
     error code `already_published` (400 error). During processing,
     it may return `training` (400 error), which means keep polling.
@@ -388,7 +303,7 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     for attempt in range(max_retries):
         response = requests.post(url, headers=headers)
 
-        if response.status_code == 200:
+        if response.status_code in (200, 201):
             print(f"✓ App published successfully!")
             return True
 
@@ -427,7 +342,55 @@ if ready:
 // Note: Parsing is triggered automatically when documents are referenced in the app!
 
 import axios from 'axios';
-import { createChatApp } from './chat_app_examples'; // assuming you have this
+
+interface CreateChatAppRequest {
+  name: string;
+  instruction: string;
+  use_case: 'knowledge_base_qa' | 'customer_service';
+  sources: Array<{ id: string }>;
+}
+
+interface ChatAppDocument {
+  id: string | null;
+  name: string | null;
+}
+
+interface CreateChatAppResponse {
+  app_type: number;
+  documents: ChatAppDocument[] | null;
+  icon_primary_color: string | null;
+  id: string;
+  input_placeholder: string | null;
+  instruction: string | null;
+  name: string;
+  position: number | null;
+  primary_color: string | null;
+  show_history: boolean | null;
+  source_traceable: boolean | null;
+  status: boolean;
+  support_new_conversation: boolean | null;
+  team_id: string;
+  temperature: number | null;
+  use_case: string | null;
+  welcome_message: string | null;
+}
+
+interface ApiResponse<T> {
+  data: T;
+}
+
+async function createChatApp(data: CreateChatAppRequest): Promise<CreateChatAppResponse> {
+  const response = await axios.post<ApiResponse<CreateChatAppResponse>>(
+    `${BASE_URL}/chat/apps/`,
+    data,
+    {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    }
+  );
+  return response.data.data;
+}
 
 async function completeWorkflow() {
   // 1. Upload multiple documents
@@ -459,7 +422,7 @@ async function waitForAppReady(appId: string, timeout = 600000): Promise<boolean
 
   while (Date.now() - startTime < timeout) {
     try {
-      const response = await axios.post<{ code: string }>(
+      const response = await axios.post(
         url,
         {},
         {
@@ -469,7 +432,7 @@ async function waitForAppReady(appId: string, timeout = 600000): Promise<boolean
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         console.log('App is ready! All documents processed.');
         return true;
       }
