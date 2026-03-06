@@ -24,7 +24,7 @@ API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
 
 def create_extract_app(name: str, schema: dict) -> dict:
     """Create a new extraction app with JSON schema."""
-    url = f"{BASE_URL}/extract/apps/"
+    url = f"{BASE_URL}/extract/apps"
     headers = {"Authorization": f"Bearer {API_KEY}"}
 
     data = {
@@ -84,9 +84,7 @@ const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
 
 interface CreateExtractAppRequest {
   name: string;
-  schema: {
-    schemas: Record<string, any>;
-  };
+  schema: Record<string, any>;
 }
 
 interface ExtractAppResponse {
@@ -99,11 +97,11 @@ interface ExtractAppResponse {
 
 async function createExtractApp(
   name: string,
-  schema: Record<string, any>
+  schema: CreateExtractAppRequest['schema']
 ): Promise<ExtractAppResponse> {
   const response = await axios.post<{ data: ExtractAppResponse }>(
-    `${BASE_URL}/extract/apps/`,
-    { name, schema: { schemas: schema } },
+    `${BASE_URL}/extract/apps`,
+    { name, schema },
     {
       headers: {
         Authorization: `Bearer ${API_KEY}`,
@@ -115,32 +113,34 @@ async function createExtractApp(
 
 // Example: Invoice extraction schema
 const invoiceSchema = {
-  type: 'object',
-  properties: {
-    'Invoice Number': {
-      type: 'string',
-      description: 'The invoice number',
-      propertyOrder: 0,
-    },
-    'Invoice Date': {
-      type: 'string',
-      description: 'The date when the invoice was issued',
-      propertyOrder: 1,
-    },
-    'Vendor Name': {
-      type: 'string',
-      description: 'Name of the vendor or company issuing the invoice',
-      propertyOrder: 2,
-    },
-    'Total Amount': {
-      type: 'string',
-      description: 'Total amount to be paid',
-      propertyOrder: 3,
-    },
-    'Due Date': {
-      type: 'string',
-      description: 'Payment due date',
-      propertyOrder: 4,
+  schemas: {
+    type: 'object',
+    properties: {
+      'Invoice Number': {
+        type: 'string',
+        description: 'The invoice number',
+        propertyOrder: 0,
+      },
+      'Invoice Date': {
+        type: 'string',
+        description: 'The date when the invoice was issued',
+        propertyOrder: 1,
+      },
+      'Vendor Name': {
+        type: 'string',
+        description: 'Name of the vendor or company issuing the invoice',
+        propertyOrder: 2,
+      },
+      'Total Amount': {
+        type: 'string',
+        description: 'Total amount to be paid',
+        propertyOrder: 3,
+      },
+      'Due Date': {
+        type: 'string',
+        description: 'Payment due date',
+        propertyOrder: 4,
+      },
     },
   },
 };
@@ -154,7 +154,6 @@ console.log(`App ID: ${app.id}`);
 ```rust
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
@@ -185,11 +184,11 @@ async fn create_extract_app(
 
     let request = CreateExtractAppRequest {
         name,
-        schema: json!({ "schemas": schema }),
+        schema,
     };
 
     let response = client
-        .post(&format!("{}/extract/apps/", BASE_URL))
+        .post(&format!("{}/extract/apps", BASE_URL))
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&request)
         .send()
@@ -203,7 +202,7 @@ async fn create_extract_app(
 ### cURL
 
 ```bash
-curl -X POST "${CHATDOC_STUDIO_BASE_URL}/extract/apps/" \
+curl -X POST "${CHATDOC_STUDIO_BASE_URL}/extract/apps" \
   -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -288,6 +287,148 @@ console.log(`Schema:`, app.schema_data);
 ```bash
 curl -X GET "${CHATDOC_STUDIO_BASE_URL}/extract/apps/abc123" \
   -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}"
+```
+
+## Update App
+
+### Python
+
+```python
+def update_extract_app(app_id: str, name: str, schema: dict) -> dict:
+    """Update extraction app configuration."""
+    url = f"{BASE_URL}/extract/apps/{app_id}"
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+
+    data = {
+        "name": name,
+        "schema": schema,
+    }
+
+    response = requests.put(url, headers=headers, json=data)
+    response.raise_for_status()
+    return response.json()["data"]
+
+# Usage
+updated_app = update_extract_app("abc123", "Updated Invoice Extractor", invoice_schema)
+print(f"Updated App ID: {updated_app['id']}")
+print(f"Updated App Name: {updated_app['name']}")
+```
+
+### TypeScript
+
+```typescript
+async function updateExtractApp(
+  appId: string,
+  name: string,
+  schema: CreateExtractAppRequest['schema']
+): Promise<ExtractAppResponse> {
+  const response = await axios.put<{ data: ExtractAppResponse }>(
+    `${BASE_URL}/extract/apps/${appId}`,
+    { name, schema },
+    {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    }
+  );
+  return response.data.data;
+}
+
+// Usage
+const updatedApp = await updateExtractApp('abc123', 'Updated Invoice Extractor', invoiceSchema);
+console.log(`Updated App ID: ${updatedApp.id}`);
+console.log(`Updated App Name: ${updatedApp.name}`);
+```
+
+### Rust
+
+```rust
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+
+const BASE_URL: &str = "https://api.chatdoc.studio/v1";
+
+#[derive(Debug, Deserialize)]
+struct ExtractAppResponse {
+    id: String,
+    name: String,
+    schema_data: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
+#[derive(Debug, Serialize)]
+struct UpdateExtractAppRequest<'a> {
+    name: &'a str,
+    schema: serde_json::Value,
+}
+
+async fn update_extract_app(
+    app_id: &str,
+    name: &str,
+    schema: serde_json::Value,
+) -> Result<ExtractAppResponse, Box<dyn std::error::Error>> {
+    let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
+    let client = Client::new();
+
+    let request = UpdateExtractAppRequest { name, schema };
+
+    let response = client
+        .put(&format!("{}/extract/apps/{}", BASE_URL, app_id))
+        .header("Authorization", format!("Bearer {}", api_key))
+        .json(&request)
+        .send()
+        .await?;
+
+    let api_response: ApiResponse<ExtractAppResponse> = response.json().await?;
+    Ok(api_response.data)
+}
+```
+
+### cURL
+
+```bash
+curl -X PUT "${CHATDOC_STUDIO_BASE_URL}/extract/apps/abc123" \
+  -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Invoice Extractor",
+    "schema": {
+      "schemas": {
+        "type": "object",
+        "properties": {
+          "Invoice Number": {
+            "type": "string",
+            "description": "The invoice number",
+            "propertyOrder": 0
+          },
+          "Invoice Date": {
+            "type": "string",
+            "description": "The date when the invoice was issued",
+            "propertyOrder": 1
+          },
+          "Vendor Name": {
+            "type": "string",
+            "description": "Name of the vendor or company issuing the invoice",
+            "propertyOrder": 2
+          },
+          "Total Amount": {
+            "type": "string",
+            "description": "Total amount to be paid",
+            "propertyOrder": 3
+          },
+          "Due Date": {
+            "type": "string",
+            "description": "Payment due date",
+            "propertyOrder": 4
+          }
+        }
+      }
+    }
+  }'
 ```
 
 ## Upload and Extract
@@ -480,7 +621,7 @@ interface ExtractionResult {
   upload_id: string;
   status: number;
   data: Record<string, any> | null;
-  detail?: string;
+  detail: string | null;
 }
 
 interface ApiErrorResponse {
