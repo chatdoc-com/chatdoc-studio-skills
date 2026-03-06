@@ -476,8 +476,15 @@ for i in {1..30}; do
     break
   fi
 
-  echo "Publishing... ($i/30)"
-  sleep 2
+  if [ "$STATUS" = "training" ]; then
+    echo "Publishing... ($i/30)"
+    sleep 2
+    continue
+  fi
+
+  echo "Publish failed: ${STATUS:-unknown_error}"
+  echo "$RESPONSE" | jq '.'
+  exit 1
 done
 ```
 
