@@ -81,30 +81,3 @@ When `status == "failed"`, the document processing encountered an error. Common 
 2. **Handle pending state**: Implement retry logic with exponential backoff when status is `chunking`
 3. **Handle failures**: Check for `failed` status and handle errors appropriately
 4. **PDF Parser specific**: For PDF Parser API, both `chunked` and `indexed` are acceptable states
-
-## Example: Polling for Completion
-
-```python
-import time
-
-def wait_for_document_indexed(upload_id: str, timeout: int = 300):
-    """Wait for document to be fully processed."""
-    start_time = time.time()
-
-    while time.time() - start_time < timeout:
-        doc = get_upload_info(upload_id)
-        status = doc["status"]
-
-        if status == "indexed":
-            return True
-        elif status == "failed":
-            raise Exception(f"Document processing failed: {upload_id}")
-
-        time.sleep(3)  # Wait 3 seconds before checking again
-
-    raise TimeoutError(f"Document processing timeout: {upload_id}")
-
-# Usage
-wait_for_document_indexed("abc123")
-print("Document is ready!")
-```
