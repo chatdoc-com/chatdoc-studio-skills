@@ -28,34 +28,72 @@ Create a new chat application.
 | `welcome_message` | string | No | Welcome message shown to users |
 | `input_placeholder` | string | No | Placeholder text for input field |
 | `primary_color` | string | No | Primary color in hex format (default: `#5971ED`) |
-| `logo` | string | No | App logo URL |
-| `icon` | string | No | Floating icon URL (for customer_service) |
-| `icon_type` | string | No | Icon type: `default`, `custom` |
 | `icon_primary_color` | string | No | Icon color in hex format (default: `#5971ED`) |
 | `position` | integer | No | Icon position: `1` (right) or `3` (left), default: `1` |
 | `source_traceable` | boolean | No | Enable source tracing (default: true) |
 | `support_new_conversation` | boolean | No | Allow new conversations (default: true) |
 | `sources` | array | No* | Array of `{"id": "upload_id"}` objects |
-| `embed_model` | string | No | Embedding model |
-| `workflow_id` | string | No | Workflow ID to attach |
 
 *Required when `use_case` is `knowledge_base_qa`
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | App ID |
-| `name` | string | App name |
-| `published` | boolean | Publication status |
-| `published_at` | integer/null | Publication timestamp |
-| `team_id` | string | Team ID |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `app_type` | integer | No | App type |
+| `documents` | array | Yes | Connected documents |
+| `documents[].id` | string | Yes | Document ID |
+| `documents[].name` | string | Yes | Document name |
+| `icon_primary_color` | string | Yes | Icon color in hex format |
+| `id` | string | No | App ID |
+| `input_placeholder` | string | Yes | Placeholder text for input field |
+| `instruction` | string | Yes | System prompt/instruction for the AI |
+| `name` | string | No | App name |
+| `position` | integer | Yes | Icon position: `1` (right) or `3` (left) |
+| `primary_color` | string | Yes | Primary color in hex format |
+| `show_history` | boolean | Yes | Show conversation history |
+| `source_traceable` | boolean | Yes | Enable source tracing |
+| `status` | boolean | No | App status |
+| `support_new_conversation` | boolean | Yes | Allow new conversations |
+| `team_id` | string | No | Team ID |
+| `temperature` | float | Yes | Temperature setting |
+| `use_case` | string | Yes | Use case of the app |
+| `welcome_message` | string | Yes | Welcome message shown to users |
+
+**Response Example:**
+
+```json
+{
+  "app_type": 0,
+  "documents": [
+    {
+      "id": "string",
+      "name": "string"
+    }
+  ],
+  "icon_primary_color": "#5971ED",
+  "id": "string",
+  "input_placeholder": "string",
+  "instruction": "string",
+  "name": "string",
+  "position": 1,
+  "primary_color": "#5971ED",
+  "show_history": true,
+  "source_traceable": true,
+  "status": true,
+  "support_new_conversation": true,
+  "team_id": "string",
+  "temperature": 0.7,
+  "use_case": "customer_service",
+  "welcome_message": "string"
+}
+```
 
 **Status Codes:**
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Success |
+| 201 | - | Success |
 | 400 | `upload_ids_not_found` | One or more upload IDs not found |
 | 400 | `maximum_document_count_exceeded` | Too many documents connected |
 | 400 | `bind_invalid_file_id` | Invalid file ID for binding |
@@ -76,13 +114,60 @@ Retrieve app details by app_id. Returns the latest draft and published versions.
 
 **Response:** Array of app objects (draft and/or published versions)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | App internal ID |
-| `alias_id` | string | App ID (same as app_id in path) |
-| `name` | string | App name |
-| `published` | boolean | Publication status |
-| `uploads` | array | Connected documents |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `app_type` | integer | No | App type |
+| `documents` | array | Yes | Connected documents |
+| `documents[].id` | string | Yes | Document ID |
+| `documents[].name` | string | Yes | Document name |
+| `icon_primary_color` | string | Yes | Icon color in hex format |
+| `id` | string | No | App ID |
+| `input_placeholder` | string | Yes | Placeholder text for input field |
+| `instruction` | string | Yes | System prompt/instruction for the AI |
+| `name` | string | No | App name |
+| `position` | integer | Yes | Icon position: `1` (right) or `3` (left) |
+| `primary_color` | string | Yes | Primary color in hex format |
+| `show_history` | boolean | Yes | Show conversation history |
+| `source_traceable` | boolean | Yes | Enable source tracing |
+| `status` | boolean | No | App status |
+| `support_new_conversation` | boolean | Yes | Allow new conversations |
+| `team_id` | string | No | Team ID |
+| `temperature` | float | Yes | Temperature setting |
+| `type` | string | No | Version type, e.g. `Draft` |
+| `use_case` | string | Yes | Use case of the app |
+| `welcome_message` | string | Yes | Welcome message shown to users |
+
+**Response Example:**
+
+```json
+[
+  {
+    "app_type": 0,
+    "documents": [
+      {
+        "id": "string",
+        "name": "string"
+      }
+    ],
+    "icon_primary_color": "#5971ED",
+    "id": "string",
+    "input_placeholder": "string",
+    "instruction": "string",
+    "name": "string",
+    "position": 1,
+    "primary_color": "#5971ED",
+    "show_history": true,
+    "source_traceable": true,
+    "status": true,
+    "support_new_conversation": true,
+    "team_id": "string",
+    "temperature": 0.7,
+    "type": "Draft",
+    "use_case": "customer_service",
+    "welcome_message": "string"
+  }
+]
+```
 
 **Status Codes:**
 
@@ -135,7 +220,7 @@ Publish the latest draft version.
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Successfully published |
+| 201 | - | Successfully published |
 | 400 | `already_published` | App is already published (no-op) |
 | 400 | `training` | App is still processing, continue polling |
 | 404 | `not_found` | App not found |
@@ -164,16 +249,16 @@ Create a new conversation thread for the app.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Conversation ID |
-| `created_at` | integer | Creation timestamp |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | Conversation ID |
+| `created_at` | integer | No | Creation timestamp |
 
 **Status Codes:**
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Success |
+| 201 | - | Success |
 | 400 | `not_ready` | Documents not ready (document status is not "indexed") |
 | 404 | `not_found` | App not found |
 
@@ -198,11 +283,11 @@ List all conversation threads for the app.
 
 **Response:** Array of conversation objects
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Conversation ID |
-| `name` | string | Conversation name |
-| `created_at` | integer | Creation timestamp |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | Conversation ID |
+| `name` | string | No | Conversation name |
+| `created_at` | integer | No | Creation timestamp |
 
 **Status Codes:**
 
@@ -226,19 +311,53 @@ Get all messages in a conversation.
 
 **Response:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Conversation ID |
-| `dialogues` | array | Array of message objects |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `created_at` | integer | No | Conversation creation timestamp |
+| `dialogues` | array | No | Array of dialogue objects |
+| `id` | string | No | Conversation ID |
+| `name` | string | No | Conversation name |
 
-**Message Object:**
+**Dialogue Object (`dialogues[]`):**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Message ID |
-| `role` | string | `user` or `assistant` |
-| `content` | string | Message content |
-| `sources` | array | Source documents (for assistant messages) |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `conversation_id` | string | No | Conversation ID |
+| `created_at` | integer | No | Dialogue creation timestamp |
+| `id` | integer | No | Dialogue ID |
+| `message` | object | No | Message payload |
+| `parent_id` | string | No | Parent dialogue/message ID |
+| `round_id` | string | No | Round ID |
+
+**Message Object (`dialogues[].message`):**
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `content` | string | No | Message content |
+| `role` | string | No | Message role |
+
+**Response Example:**
+
+```json
+{
+  "created_at": 1757320181,
+  "dialogues": [
+    {
+      "conversation_id": "string",
+      "created_at": 1757320181,
+      "id": 1,
+      "message": {
+        "content": "string",
+        "role": "string"
+      },
+      "parent_id": "string",
+      "round_id": "string"
+    }
+  ],
+  "id": "string",
+  "name": "string"
+}
+```
 
 **Status Codes:**
 
@@ -276,25 +395,25 @@ Send a message to a conversation.
 
 **Response:** (non-streaming)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | string | Conversation name (summary of the chat) |
-| `conversation_id` | string | Conversation ID |
-| `answer` | string | AI response content |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `name` | string | No | Conversation name (summary of the chat) |
+| `conversation_id` | string | No | Conversation ID |
+| `answer` | string | No | AI response content |
 
 **Streaming Response:** Server-Sent Events (SSE) format
 
 Each SSE event contains a JSON object with the following fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `msg_id` | string | Message ID |
-| `round_id` | string | Round ID for this conversation |
-| `role` | string | Message role: `system`, `user`, `assistant`, `tool`, `function` |
-| `content` | string | Message content |
-| `reasoning_content` | string/null | Reasoning content (if available) |
-| `conversation_id` | string | Conversation ID |
-| `name` | string | App name |
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `msg_id` | string | No | Message ID |
+| `round_id` | string | No | Round ID for this conversation |
+| `role` | string | No | Message role: `system`, `user`, `assistant`, `tool`, `function` |
+| `content` | string | Yes | Message content |
+| `reasoning_content` | string/null | Yes | Reasoning content (if available) |
+| `conversation_id` | string | No | Conversation ID |
+| `name` | string | Yes | App name |
 
 **SSE Format:**
 ```
@@ -307,7 +426,7 @@ data: {"msg_id": "...", "content": "...", ...}
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Success |
+| 201 | - | Success |
 | 400 | `no_published_version` | **App must be published before sending messages** |
 | 400 | `conversation_not_match_app` | Conversation doesn't belong to app |
 | 404 | `not_found` | App or conversation not found |

@@ -80,6 +80,7 @@ interface CreateAppRequest {
   sources?: Array<{ id: string }>;
   temperature?: number;
   welcome_message?: string;
+  input_placeholder?: string;
   show_history?: boolean;
   primary_color?: string;
   icon_primary_color?: string;
@@ -89,16 +90,54 @@ interface CreateAppRequest {
   // ... other fields
 }
 
-interface AppResponse {
-  id: string;
-  name: string;
-  published: boolean;
-  published_at: number | null;
-  team_id: string;
+interface AppDocument {
+  id: string | null;
+  name: string | null;
 }
 
-async function createChatApp(data: CreateAppRequest): Promise<AppResponse> {
-  const response = await axios.post<{ data: AppResponse }>(
+interface CreateAppResponse {
+  app_type: number;
+  documents: AppDocument[] | null;
+  icon_primary_color: string | null;
+  id: string;
+  input_placeholder: string | null;
+  instruction: string | null;
+  name: string;
+  position: number | null;
+  primary_color: string | null;
+  show_history: boolean | null;
+  source_traceable: boolean | null;
+  status: boolean;
+  support_new_conversation: boolean | null;
+  team_id: string;
+  temperature: number | null;
+  use_case: string | null;
+  welcome_message: string | null;
+}
+
+interface GetAppResponse {
+  app_type: number;
+  documents: AppDocument[] | null;
+  icon_primary_color: string | null;
+  id: string;
+  input_placeholder: string | null;
+  instruction: string | null;
+  name: string;
+  position: number | null;
+  primary_color: string | null;
+  show_history: boolean | null;
+  source_traceable: boolean | null;
+  status: boolean;
+  support_new_conversation: boolean | null;
+  team_id: string;
+  temperature: number | null;
+  type: string;
+  use_case: string | null;
+  welcome_message: string | null;
+}
+
+async function createChatApp(data: CreateAppRequest): Promise<CreateAppResponse> {
+  const response = await axios.post<{ data: CreateAppResponse }>(
     `${BASE_URL}/chat/apps/`,
     data,
     {
@@ -135,17 +174,34 @@ console.log(`App ID: ${kbApp.id}`);
 ```rust
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 const BASE_URL: &str = "https://api.chatdoc.studio/v1";
 
 #[derive(Debug, Deserialize)]
-struct AppResponse {
+struct AppDocument {
+    id: Option<String>,
+    name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CreateAppResponse {
+    app_type: i32,
+    documents: Option<Vec<AppDocument>>,
+    icon_primary_color: Option<String>,
     id: String,
+    input_placeholder: Option<String>,
+    instruction: Option<String>,
     name: String,
-    published: bool,
-    published_at: Option<i64>,
+    position: Option<i32>,
+    primary_color: Option<String>,
+    show_history: Option<bool>,
+    source_traceable: Option<bool>,
+    status: bool,
+    support_new_conversation: Option<bool>,
     team_id: String,
+    temperature: Option<f32>,
+    use_case: Option<String>,
+    welcome_message: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -176,7 +232,7 @@ async fn create_chat_app(
     instruction: &str,
     use_case: &str,
     sources: Option<Vec<String>>,
-) -> Result<AppResponse, Box<dyn std::error::Error>> {
+) -> Result<CreateAppResponse, Box<dyn std::error::Error>> {
     let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
     let client = Client::new();
 
@@ -199,7 +255,7 @@ async fn create_chat_app(
         .send()
         .await?;
 
-    let api_response: ApiResponse<AppResponse> = response.json().await?;
+    let api_response: ApiResponse<CreateAppResponse> = response.json().await?;
     Ok(api_response.data)
 }
 ```
@@ -247,14 +303,14 @@ def get_chat_app(app_id: str) -> list[dict]:
 # Usage
 apps = get_chat_app("abc123")
 for app in apps:
-    print(f"App: {app['name']}, Published: {app['published']}")
+    print(f"App: {app['name']}, Type: {app['type']}, Status: {app['status']}")
 ```
 
 ### TypeScript
 
 ```typescript
-async function getChatApp(appId: string): Promise<AppResponse[]> {
-  const response = await axios.get<{ data: AppResponse[] }>(
+async function getChatApp(appId: string): Promise<GetAppResponse[]> {
+  const response = await axios.get<{ data: GetAppResponse[] }>(
     `${BASE_URL}/chat/apps/${appId}`,
     {
       headers: {
@@ -268,7 +324,7 @@ async function getChatApp(appId: string): Promise<AppResponse[]> {
 // Usage
 const apps = await getChatApp('abc123');
 for (const app of apps) {
-  console.log(`App: ${app.name}, Published: ${app.published}`);
+  console.log(`App: ${app.name}, Type: ${app.type}, Status: ${app.status}`);
 }
 ```
 
@@ -307,8 +363,8 @@ app = update_chat_app(
 async function updateChatApp(
   appId: string,
   updates: Partial<CreateAppRequest>
-): Promise<AppResponse> {
-  const response = await axios.put<{ data: AppResponse }>(
+): Promise<CreateAppResponse> {
+  const response = await axios.put<{ data: CreateAppResponse }>(
     `${BASE_URL}/chat/apps/${appId}`,
     updates,
     {
@@ -343,13 +399,13 @@ curl -X PUT "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123" \
 
 ## Publish App
 
-**Important**: Publishing is an async operation when the app contains documents. You need to poll the publish endpoint until it returns 200.
+**Important**: Publishing is an async operation when the app contains documents. Keep polling until the request succeeds.
 
 **Status Codes:**
 
 | HTTP Code | Error Code | Description |
 |-----------|------------|-------------|
-| 200 | - | Successfully published |
+| 201 | - | Successfully published |
 | 400 | `already_published` | App is already published (no-op) |
 | 400 | `training` | App is still processing, continue polling |
 | 404 | `not_found` | App not found |
@@ -377,7 +433,7 @@ def publish_chat_app(
     for attempt in range(max_retries):
         response = requests.post(url, headers=headers)
 
-        if response.status_code == 200:
+        if response.status_code in (200, 201):
             print(f"✓ App published successfully!")
             return
 
@@ -423,7 +479,7 @@ async function publishChatApp(
         headers: { Authorization: `Bearer ${API_KEY}` }
       });
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         console.log('✓ App published successfully!');
         return;
       }
@@ -466,24 +522,28 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123/publish" \
 
 # Poll for completion (in a script)
 for i in {1..30}; do
-  RESPONSE=$(curl -s -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123/publish" \
+  HTTP_CODE=$(curl -s -o /tmp/publish_resp.json -w "%{http_code}" -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123/publish" \
     -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}")
+  ERROR_CODE=$(jq -r '.code // empty' /tmp/publish_resp.json)
 
-  STATUS=$(echo "$RESPONSE" | jq -r '.code // empty')
-
-  if [ "$STATUS" = "success" ] || [ "$STATUS" = "already_published" ]; then
+  if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
     echo "✓ App published!"
     break
   fi
 
-  if [ "$STATUS" = "training" ]; then
+  if [ "$ERROR_CODE" = "already_published" ]; then
+    echo "✓ App already published!"
+    break
+  fi
+
+  if [ "$ERROR_CODE" = "training" ]; then
     echo "Publishing... ($i/30)"
     sleep 2
     continue
   fi
 
-  echo "Publish failed: ${STATUS:-unknown_error}"
-  echo "$RESPONSE" | jq '.'
+  echo "Publish failed: HTTP ${HTTP_CODE}, code=${ERROR_CODE:-unknown_error}"
+  cat /tmp/publish_resp.json | jq '.'
   exit 1
 done
 ```
@@ -585,7 +645,7 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     """Publish app and poll for completion.
 
     The publish endpoint processes documents in the background.
-    You need to poll until it returns 200 (published successfully).
+    You need to poll until it returns success (usually 201).
     If you call it again after successful publication, you'll get
     error code `already_published` (400 error). During processing,
     it may return `training` (400 error), which means keep polling.
@@ -596,7 +656,7 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     for attempt in range(max_retries):
         response = requests.post(url, headers=headers)
 
-        if response.status_code == 200:
+        if response.status_code in (200, 201):
             print(f"✓ App published successfully!")
             return
 
@@ -714,10 +774,10 @@ interface StreamingMessage {
   msg_id: string;
   round_id: string;
   role: string;
-  content: string;
+  content: string | null;
   reasoning_content: string | null;
   conversation_id: string;
-  name: string;
+  name: string | null;
 }
 
 async function sendMessageStream(
@@ -874,22 +934,30 @@ def get_messages(app_id: str, conversation_id: str) -> dict:
 
 # Usage
 messages = get_messages("abc123", "conv-id")
-for msg in messages["dialogues"]:
-    print(f"{msg['role']}: {msg['content']}")
+for dialogue in messages["dialogues"]:
+    message = dialogue["message"]
+    print(f"{message['role']}: {message['content']}")
 ```
 
 ### TypeScript
 
 ```typescript
 interface Dialogue {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: any[];
+  conversation_id: string;
+  created_at: number;
+  id: number;
+  message: {
+    content: string;
+    role: string;
+  };
+  parent_id: string;
+  round_id: string;
 }
 
 interface ConversationDetail {
+  created_at: number;
   id: string;
+  name: string;
   dialogues: Dialogue[];
 }
 
@@ -911,7 +979,7 @@ async function getMessages(
 // Usage
 const messages = await getMessages('abc123', 'conv-id');
 for (const msg of messages.dialogues) {
-  console.log(`${msg.role}: ${msg.content}`);
+  console.log(`${msg.message.role}: ${msg.message.content}`);
 }
 ```
 
