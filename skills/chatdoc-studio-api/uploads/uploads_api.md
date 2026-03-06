@@ -41,7 +41,7 @@ Upload a document file to your team.
 | `upload_id` | string | Upload ID - save this for app creation |
 | `name` | string | File name |
 | `file_type` | string | File type (pdf, docx, md, txt, etc.) |
-| `status` | string | Document processing status: `chunking`, `indexed`, `failed` |
+| `status` | string | Document processing status: `chunking`, `indexed`, `failed`, `chunked` |
 | `created_at` | integer | Upload timestamp |
 
 **Document Status After Upload:**
@@ -99,7 +99,7 @@ If the document status is not `indexed` when referenced in an app, the system wi
 ```json
 {
   "name": "My Chat App",
-  "prompt": "Answer questions about the documents",
+  "instruction": "Answer questions about the documents",
   "sources": [
     {"id": "UPLOAD_ID_1"},
     {"id": "UPLOAD_ID_2"}

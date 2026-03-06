@@ -228,7 +228,7 @@ Publish the latest draft version.
 **Important Notes**:
 - Publishing is an **async operation** when the app contains documents
 - The endpoint processes documents in the background
-- You need to **poll** this endpoint until it returns `200` (published successfully)
+- You need to **poll** this endpoint until it returns `201` (published successfully)
 - During processing, the endpoint may return `400` with error code `training`; keep polling
 - If you call publish again after successful publication, you'll get `already_published` error
 - An app must be published before you can send messages to it

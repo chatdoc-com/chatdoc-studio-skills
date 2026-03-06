@@ -72,7 +72,7 @@ Retrieve app details.
 **Response:**
 
 | Field | Type | Nullable | Description |
-|-------|------|----------| ------------|
+|-------|------|----------|------------|
 | `id` | string | No | App ID |
 | `name` | string | No | App name |
 | `schema_data` | object | No | JSON Schema definition |
