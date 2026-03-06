@@ -380,7 +380,8 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     The publish endpoint processes documents in the background.
     You need to poll until it returns 200 (published successfully).
     If you call it again after successful publication, you'll get
-    error code `already_published` (400 error).
+    error code `already_published` (400 error). During processing,
+    it may return `training` (400 error), which means keep polling.
     """
     url = f"{BASE_URL}/chat/apps/{app_id}/publish"
     headers = {"Authorization": f"Bearer {API_KEY}"}
@@ -398,7 +399,14 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
             if error_code == "already_published":
                 print(f"✓ App already published!")
                 return True
+            if error_code == "training":
+                print(f"Publishing... ({attempt + 1}/{max_retries})")
+                time.sleep(delay)
+                continue
             # Other errors - raise
+            response.raise_for_status()
+
+        if response.status_code >= 400:
             response.raise_for_status()
 
         # Still processing (202 or other status), wait and retry
@@ -472,6 +480,12 @@ async function waitForAppReady(appId: string, timeout = 600000): Promise<boolean
           console.log('App is ready! All documents processed.');
           return true;
         }
+        if (code === 'training') {
+          console.log(`App is still training... (${Math.floor((Date.now() - startTime) / 1000)}s elapsed)`);
+          await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+          continue;
+        }
+        throw new Error(`Unexpected publish error code: ${code ?? 'unknown_error'}`);
       } else {
         throw error;
       }

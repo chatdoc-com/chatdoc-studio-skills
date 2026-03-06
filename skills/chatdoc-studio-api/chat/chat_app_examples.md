@@ -351,6 +351,7 @@ curl -X PUT "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123" \
 |-----------|------------|-------------|
 | 200 | - | Successfully published |
 | 400 | `already_published` | App is already published (no-op) |
+| 400 | `training` | App is still processing, continue polling |
 | 404 | `not_found` | App not found |
 
 ### Python
@@ -382,10 +383,18 @@ def publish_chat_app(
 
         if response.status_code == 400:
             error_data = response.json()
-            if error_data.get("code") == "already_published":
+            error_code = error_data.get("code")
+            if error_code == "already_published":
                 print(f"✓ App already published!")
                 return
+            if error_code == "training":
+                print(f"Publishing... ({attempt + 1}/{max_retries})")
+                time.sleep(delay)
+                continue
             # Other errors - raise
+            response.raise_for_status()
+
+        if response.status_code >= 400:
             response.raise_for_status()
 
         # Still processing, wait and retry
@@ -428,6 +437,11 @@ async function publishChatApp(
         if (errorCode === 'already_published') {
           console.log('✓ App already published!');
           return;
+        }
+        if (errorCode === 'training') {
+          console.log(`Publishing... (${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
         }
         throw new Error(`Publish failed: ${errorCode ?? 'unknown_error'}`);
       }
@@ -566,7 +580,8 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
     The publish endpoint processes documents in the background.
     You need to poll until it returns 200 (published successfully).
     If you call it again after successful publication, you'll get
-    error code `already_published` (400 error).
+    error code `already_published` (400 error). During processing,
+    it may return `training` (400 error), which means keep polling.
     """
     url = f"{BASE_URL}/chat/apps/{app_id}/publish"
     headers = {"Authorization": f"Bearer {API_KEY}"}
@@ -585,7 +600,14 @@ def publish_app_with_retry(app_id: str, max_retries: int = 60, delay: int = 2):
             if error_code == "already_published":
                 print(f"✓ App already published!")
                 return
+            if error_code == "training":
+                print(f"Publishing... ({attempt + 1}/{max_retries})")
+                time.sleep(delay)
+                continue
             # Other errors - raise
+            response.raise_for_status()
+
+        if response.status_code >= 400:
             response.raise_for_status()
 
         # Still processing (202 or other status), wait and retry

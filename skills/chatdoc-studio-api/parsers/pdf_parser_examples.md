@@ -320,6 +320,11 @@ struct ApiErrorResponse {
     detail: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ApiResponse<T> {
+    data: T,
+}
+
 async fn get_pdf_json(upload_id: &str, wait: bool) -> Result<JsonResponse, Box<dyn std::error::Error>> {
     let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
     let client = Client::new();
