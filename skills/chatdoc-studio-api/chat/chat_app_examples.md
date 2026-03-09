@@ -801,6 +801,24 @@ async function sendMessageStream(
     }),
   });
 
+  if (!response.ok) {
+    const rawError = await response.text();
+    let errorMessage = `Send message stream failed with status ${response.status}`;
+
+    if (rawError.trim()) {
+      try {
+        const errorData = JSON.parse(rawError) as { code?: string; detail?: string };
+        const errorCode = errorData.code ?? 'unknown_error';
+        const errorDetail = errorData.detail ?? 'No detail';
+        errorMessage = `Send message stream failed: ${errorCode} (${errorDetail})`;
+      } catch {
+        errorMessage = `Send message stream failed with status ${response.status}: ${rawError}`;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
 

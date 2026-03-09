@@ -22,7 +22,7 @@ import requests
 BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
 API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
 
-def upload_pdf(file_path: str, wait: bool = True) -> dict:
+def upload_pdf(file_path: str, wait: bool = False) -> dict:
     """Upload a PDF file for parsing."""
     url = f"{BASE_URL}/pdf/parser/upload"
     headers = {"Authorization": f"Bearer {API_KEY}"}
@@ -68,7 +68,7 @@ interface UploadResponse {
 
 async function uploadPDF(
   filePath: string,
-  wait: boolean = true
+  wait: boolean = false
 ): Promise<UploadResponse['data']> {
   const form = new FormData();
   form.append('file', fs.createReadStream(filePath));
@@ -154,7 +154,7 @@ async fn upload_pdf(
 // Usage
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let result = upload_pdf("document.pdf", true).await?;
+    let result = upload_pdf("document.pdf", false).await?;
     println!(
         "Upload ID: {}, Type: {}, Status: {}, Created At: {}",
         result.upload_id, result.file_type, result.status, result.created_at
@@ -169,7 +169,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 curl -X POST "${CHATDOC_STUDIO_BASE_URL}/pdf/parser/upload" \
   -H "Authorization: Bearer ${CHATDOC_STUDIO_API_KEY}" \
   -F "file=@document.pdf" \
-  -F "wait=true"
+  -F "wait=false"
 ```
 
 ## Get JSON

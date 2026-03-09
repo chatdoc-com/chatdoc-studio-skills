@@ -515,14 +515,12 @@ else:
 ### TypeScript
 
 ```typescript
-import axios, { AxiosError } from 'axios';
-
 async function uploadFileSafe(filePath: string): Promise<UploadResponse | null> {
   try {
     return await uploadFile(filePath);
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      const e = error as AxiosError<any>;
+      const e = error;
 
       if (e.response?.status === 400) {
         const errorCode = e.response.data?.code;
