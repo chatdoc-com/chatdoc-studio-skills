@@ -47,7 +47,8 @@ for app in result["items"]:
     app_type_name = {
         1: "ChatApp",
         2: "ExtractApp",
-        5: "RAG App"
+        5: "RAG App",
+        7: "Agent App"
     }.get(app["app_type"], "Unknown")
     print(f"  - {app['name']} ({app_type_name}) - ID: {app['id']}")
 
@@ -133,6 +134,7 @@ for (const app of result.items) {
     1: 'ChatApp',
     2: 'ExtractApp',
     5: 'RAG App',
+    7: 'Agent App',
   }[app.app_type] || 'Unknown';
   console.log(`  - ${app.name} (${appTypeName}) - ID: ${app.id}`);
 }
@@ -188,6 +190,13 @@ curl -X GET "${CHATDOC_STUDIO_BASE_URL}/apps/?currentPage=2&pageSize=10" \
 #         "id": "def456uvw",
 #         "name": "Invoice Extractor",
 #         "app_type": 2,
+#         "created_at": 1757320181,
+#         "updated_at": 1757320181
+#       },
+#       {
+#         "id": "ghi789rst",
+#         "name": "Contract Review Agent",
+#         "app_type": 7,
 #         "created_at": 1757320181,
 #         "updated_at": 1757320181
 #       }

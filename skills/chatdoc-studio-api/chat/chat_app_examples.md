@@ -51,6 +51,7 @@ def create_chat_app(
 app = create_chat_app(
     name="Customer Support Bot",
     instruction="You are a helpful customer support assistant.",
+    source_traceable=False,
 )
 print(f"App ID: {app['id']}")
 
@@ -61,6 +62,12 @@ app = create_chat_app(
     use_case="knowledge_base_qa",
     sources=[{"id": "F1CMSW"}],  # upload_id from document
     temperature=0.3,
+    suggested_messages_enabled=True,
+    suggested_messages=[
+        "What topics are covered?",
+        "Summarize this document.",
+    ],
+    retrieval_mode="contextual",
 )
 print(f"App ID: {app['id']}")
 ```
@@ -87,7 +94,9 @@ interface CreateAppRequest {
   position?: number;
   source_traceable?: boolean;
   support_new_conversation?: boolean;
-  // ... other fields
+  suggested_messages_enabled?: boolean;
+  suggested_messages?: string[];
+  retrieval_mode?: 'basic' | 'contextual' | 'expanded';
 }
 
 interface AppDocument {
@@ -105,9 +114,12 @@ interface CreateAppResponse {
   name: string;
   position: number | null;
   primary_color: string | null;
+  retrieval_mode: 'basic' | 'contextual' | 'expanded';
   show_history: boolean | null;
   source_traceable: boolean | null;
   status: boolean;
+  suggested_messages: string[];
+  suggested_messages_enabled: boolean;
   support_new_conversation: boolean | null;
   team_id: string;
   temperature: number | null;
@@ -125,9 +137,12 @@ interface GetAppResponse {
   name: string;
   position: number | null;
   primary_color: string | null;
+  retrieval_mode: 'basic' | 'contextual' | 'expanded';
   show_history: boolean | null;
   source_traceable: boolean | null;
   status: boolean;
+  suggested_messages: string[];
+  suggested_messages_enabled: boolean;
   support_new_conversation: boolean | null;
   team_id: string;
   temperature: number | null;
@@ -154,6 +169,7 @@ const app = await createChatApp({
   name: 'Customer Support Bot',
   instruction: 'You are a helpful customer support assistant.',
   use_case: 'customer_service',
+  source_traceable: false,
   welcome_message: 'Hello! How can I help you today?',
 });
 console.log(`App ID: ${app.id}`);
@@ -165,6 +181,12 @@ const kbApp = await createChatApp({
   use_case: 'knowledge_base_qa',
   sources: [{ id: 'F1CMSW' }], // upload_id from document
   temperature: 0.3,
+  suggested_messages_enabled: true,
+  suggested_messages: [
+    'What topics are covered?',
+    'Summarize this document.',
+  ],
+  retrieval_mode: 'contextual',
 });
 console.log(`App ID: ${kbApp.id}`);
 ```
@@ -194,9 +216,12 @@ struct CreateAppResponse {
     name: String,
     position: Option<i32>,
     primary_color: Option<String>,
+    retrieval_mode: String,
     show_history: Option<bool>,
     source_traceable: Option<bool>,
     status: bool,
+    suggested_messages: Vec<String>,
+    suggested_messages_enabled: bool,
     support_new_conversation: Option<bool>,
     team_id: String,
     temperature: Option<f32>,
@@ -225,6 +250,12 @@ struct CreateAppRequest<'a> {
     sources: Option<Vec<Source>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     temperature: Option<f32>,
+    #[serde(rename = "suggested_messages_enabled", skip_serializing_if = "Option::is_none")]
+    suggested_messages_enabled: Option<bool>,
+    #[serde(rename = "suggested_messages", skip_serializing_if = "Option::is_none")]
+    suggested_messages: Option<Vec<&'a str>>,
+    #[serde(rename = "retrieval_mode", skip_serializing_if = "Option::is_none")]
+    retrieval_mode: Option<&'a str>,
 }
 
 async fn create_chat_app(
@@ -232,6 +263,8 @@ async fn create_chat_app(
     instruction: &str,
     use_case: &str,
     sources: Option<Vec<String>>,
+    suggested_messages: Option<Vec<&str>>,
+    retrieval_mode: Option<&str>,
 ) -> Result<CreateAppResponse, Box<dyn std::error::Error>> {
     let api_key = std::env::var("CHATDOC_STUDIO_API_KEY")?;
     let client = Client::new();
@@ -246,6 +279,9 @@ async fn create_chat_app(
         use_case,
         sources,
         temperature: None,
+        suggested_messages_enabled: suggested_messages.as_ref().map(|_| true),
+        suggested_messages,
+        retrieval_mode,
     };
 
     let response = client
@@ -271,6 +307,7 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/" \
     "name": "Customer Support Bot",
     "instruction": "You are a helpful customer support assistant.",
     "use_case": "customer_service",
+    "source_traceable": false,
     "welcome_message": "Hello! How can I help you today?"
   }'
 
@@ -283,7 +320,13 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/" \
     "instruction": "Answer questions based on the provided documents.",
     "use_case": "knowledge_base_qa",
     "sources": [{"id": "F1CMSW"}],
-    "temperature": 0.3
+    "temperature": 0.3,
+    "suggested_messages_enabled": true,
+    "suggested_messages": [
+      "What topics are covered?",
+      "Summarize this document."
+    ],
+    "retrieval_mode": "contextual"
   }'
 ```
 
@@ -354,6 +397,12 @@ app = update_chat_app(
     name="Updated Name",
     instruction="Updated instruction",
     temperature=0.5,
+    suggested_messages_enabled=True,
+    suggested_messages=[
+        "Give me the highlights.",
+        "What should I read first?",
+    ],
+    retrieval_mode="expanded",
 )
 ```
 
@@ -381,6 +430,12 @@ const app = await updateChatApp('abc123', {
   name: 'Updated Name',
   instruction: 'Updated instruction',
   temperature: 0.5,
+  suggested_messages_enabled: true,
+  suggested_messages: [
+    'Give me the highlights.',
+    'What should I read first?',
+  ],
+  retrieval_mode: 'expanded',
 });
 ```
 
@@ -393,7 +448,13 @@ curl -X PUT "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123" \
   -d '{
     "name": "Updated Name",
     "instruction": "Updated instruction",
-    "temperature": 0.5
+    "temperature": 0.5,
+    "suggested_messages_enabled": true,
+    "suggested_messages": [
+      "Give me the highlights.",
+      "What should I read first?"
+    ],
+    "retrieval_mode": "expanded"
   }'
 ```
 

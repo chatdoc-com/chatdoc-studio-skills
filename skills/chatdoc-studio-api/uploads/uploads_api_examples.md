@@ -271,6 +271,12 @@ def create_chat_app(name: str, instruction: str, sources: list) -> dict:
         "instruction": instruction,
         "use_case": "knowledge_base_qa",
         "sources": sources,
+        "suggested_messages_enabled": True,
+        "suggested_messages": [
+            "What topics are covered?",
+            "Summarize this knowledge base.",
+        ],
+        "retrieval_mode": "contextual",
     }
 
     response = requests.post(url, headers=headers, json=data)
@@ -348,6 +354,9 @@ interface CreateChatAppRequest {
   instruction: string;
   use_case: 'knowledge_base_qa' | 'customer_service';
   sources: Array<{ id: string }>;
+  suggested_messages_enabled?: boolean;
+  suggested_messages?: string[];
+  retrieval_mode?: 'basic' | 'contextual' | 'expanded';
 }
 
 interface ChatAppDocument {
@@ -365,9 +374,12 @@ interface CreateChatAppResponse {
   name: string;
   position: number | null;
   primary_color: string | null;
+  retrieval_mode: 'basic' | 'contextual' | 'expanded';
   show_history: boolean | null;
   source_traceable: boolean | null;
   status: boolean;
+  suggested_messages: string[];
+  suggested_messages_enabled: boolean;
   support_new_conversation: boolean | null;
   team_id: string;
   temperature: number | null;
@@ -405,6 +417,12 @@ async function completeWorkflow() {
     instruction: 'You are a helpful assistant that answers questions about company policies and procedures.',
     use_case: 'knowledge_base_qa',
     sources,
+    suggested_messages_enabled: true,
+    suggested_messages: [
+      'What topics are covered?',
+      'Summarize this knowledge base.',
+    ],
+    retrieval_mode: 'contextual',
   });
 
   console.log(`Chat App created: ${app.id}`);

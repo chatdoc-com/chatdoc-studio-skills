@@ -32,9 +32,20 @@ Create a new chat application.
 | `position` | integer | No | Icon position: `1` (right) or `3` (left), default: `1` |
 | `source_traceable` | boolean | No | Enable source tracing (default: true) |
 | `support_new_conversation` | boolean | No | Allow new conversations (default: true) |
+| `suggested_messages_enabled` | boolean | No | Whether to show suggested starter messages (default: `false`) |
+| `suggested_messages` | array[string] | No | Suggested starter messages, max 3 items, each item max 50 characters |
+| `retrieval_mode` | string | No | Retrieval mode: `basic` (default), `contextual`, or `expanded` |
 | `sources` | array | No* | Array of `{"id": "upload_id"}` objects |
 
 *Required when `use_case` is `knowledge_base_qa`
+
+**Retrieval Modes:**
+
+| Mode | Description |
+|------|-------------|
+| `basic` | Fast and efficient. Combines Embedding and BM25 hybrid retrieval, followed by a non-contextual reranker to reorder the results |
+| `contextual` | More precise. Combines Embedding and BM25 hybrid retrieval, followed by a contextual reranker to reorder the results for better accuracy |
+| `expanded` | More comprehensive and highly accurate, with increased latency. After the initial contextual reranking, surrounding context from the top relevant segments is added to the candidate set for a second round of reranking |
 
 **Response:**
 
@@ -51,9 +62,12 @@ Create a new chat application.
 | `name` | string | No | App name |
 | `position` | integer | Yes | Icon position: `1` (right) or `3` (left) |
 | `primary_color` | string | Yes | Primary color in hex format |
+| `retrieval_mode` | string | No | Retrieval mode used when the app searches bound documents |
 | `show_history` | boolean | Yes | Show conversation history |
 | `source_traceable` | boolean | Yes | Enable source tracing |
 | `status` | boolean | No | App status |
+| `suggested_messages` | array[string] | No | Suggested starter messages |
+| `suggested_messages_enabled` | boolean | No | Whether suggested starter messages are enabled |
 | `support_new_conversation` | boolean | Yes | Allow new conversations |
 | `team_id` | string | No | Team ID |
 | `temperature` | float | Yes | Temperature setting |
@@ -78,13 +92,19 @@ Create a new chat application.
   "name": "string",
   "position": 1,
   "primary_color": "#5971ED",
+  "retrieval_mode": "contextual",
   "show_history": true,
   "source_traceable": true,
   "status": true,
+  "suggested_messages": [
+    "What does this document cover?",
+    "Summarize the key points."
+  ],
+  "suggested_messages_enabled": true,
   "support_new_conversation": true,
   "team_id": "string",
   "temperature": 0.7,
-  "use_case": "customer_service",
+  "use_case": "knowledge_base_qa",
   "welcome_message": "string"
 }
 ```
@@ -127,9 +147,12 @@ Retrieve app details by app_id. Returns the latest draft and published versions.
 | `name` | string | No | App name |
 | `position` | integer | Yes | Icon position: `1` (right) or `3` (left) |
 | `primary_color` | string | Yes | Primary color in hex format |
+| `retrieval_mode` | string | No | Retrieval mode used when the app searches bound documents |
 | `show_history` | boolean | Yes | Show conversation history |
 | `source_traceable` | boolean | Yes | Enable source tracing |
 | `status` | boolean | No | App status |
+| `suggested_messages` | array[string] | No | Suggested starter messages |
+| `suggested_messages_enabled` | boolean | No | Whether suggested starter messages are enabled |
 | `support_new_conversation` | boolean | Yes | Allow new conversations |
 | `team_id` | string | No | Team ID |
 | `temperature` | float | Yes | Temperature setting |
@@ -156,14 +179,20 @@ Retrieve app details by app_id. Returns the latest draft and published versions.
     "name": "string",
     "position": 1,
     "primary_color": "#5971ED",
+    "retrieval_mode": "contextual",
     "show_history": true,
     "source_traceable": true,
     "status": true,
+    "suggested_messages": [
+      "What does this document cover?",
+      "Summarize the key points."
+    ],
+    "suggested_messages_enabled": true,
     "support_new_conversation": true,
     "team_id": "string",
     "temperature": 0.7,
     "type": "Draft",
-    "use_case": "customer_service",
+    "use_case": "knowledge_base_qa",
     "welcome_message": "string"
   }
 ]
@@ -232,6 +261,11 @@ Publish the latest draft version.
 - During processing, the endpoint may return `400` with error code `training`; keep polling
 - If you call publish again after successful publication, you'll get `already_published` error
 - An app must be published before you can send messages to it
+
+**Create/Update Notes**:
+- `suggested_messages` can contain at most 3 items, and each item must be 50 characters or fewer.
+- When `use_case` is `customer_service` and no `sources` are provided, set `source_traceable` to `false`.
+- When `use_case` is `customer_service` and no `sources` are provided, `retrieval_mode` must remain `basic`.
 
 ## Conversation Management
 

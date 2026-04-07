@@ -1,6 +1,6 @@
 ---
 name: chatdoc-studio-api
-description: ChatDOC Studio API usage guide - complete documentation and examples for PDF parsing, chat applications, content retrieval, and data extraction APIs
+description: ChatDOC Studio API usage guide - complete documentation and examples for PDF parsing, chat applications, agent applications, content retrieval, and data extraction APIs
 ---
 
 ## Overview
@@ -9,6 +9,7 @@ ChatDOC Studio is an AI-powered document processing and conversation platform pr
 
 - **PDF Parser** - Parse PDF documents into structured data (JSON, Markdown, Excel)
 - **Chat App** - Create document-based Q&A chat applications
+- **Agent App** - Run task-based document analysis with published Agent Apps
 - **RAG App** - Content retrieval applications based on documents
 - **Extract App** - Extract structured data from documents
 
@@ -43,6 +44,7 @@ Manage API configuration through environment variables:
 |-----|-----|-----|------|----|-----|
 | PDF Parser | ✓ | ✗ | ✗ | ✗ | ✗ |
 | Chat App | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Agent App | ✓ | ✓ | ✓ | ✗ | ✗ |
 | RAG App | ✓ | ✓ | ✓ | ✗ | ✗ |
 | Extract App | ✓ | ✓ | ✓ | ✗ | ✗ |
 
@@ -50,7 +52,7 @@ Manage API configuration through environment variables:
 
 ### Uploads API
 
-**Required for all apps except PDF Parser**. Upload documents to your team before using them in Chat Apps, RAG Apps, or Extract Apps.
+**Required for all apps except PDF Parser**. Upload documents to your team before using them in Chat Apps, Agent Apps, RAG Apps, or Extract Apps.
 
 Documentation: [uploads/uploads_api.md](uploads/uploads_api.md)
 Code Examples: [uploads/uploads_api_examples.md](uploads/uploads_api_examples.md)
@@ -69,6 +71,13 @@ Create document-based Q&A chat applications with multi-turn conversations and so
 Documentation: [chat/chat_app.md](chat/chat_app.md)
 Code Examples: [chat/chat_app_examples.md](chat/chat_app_examples.md)
 
+### Agent App API
+
+Submit uploaded files to published Agent Apps, poll task status, and fetch final task results.
+
+Documentation: [agent/agent_app.md](agent/agent_app.md)
+Code Examples: [agent/agent_app_examples.md](agent/agent_app_examples.md)
+
 ### RAG App API
 
 Perform semantic retrieval based on document content to retrieve relevant document fragments.
@@ -85,7 +94,7 @@ Code Examples: [extraction/extract_app_examples.md](extraction/extract_app_examp
 
 ### Apps API
 
-Manage all types of applications (Chat, Extract, RAG) in your team - list and delete apps.
+Manage all types of applications (Chat, Agent, Extract, RAG) in your team - list and delete apps.
 
 Documentation: [apps/apps.md](apps/apps.md)
 Code Examples: [apps/apps_examples.md](apps/apps_examples.md)
@@ -159,9 +168,9 @@ API calls are subject to rate limits based on your subscription plan. HTTP 429 s
 1. Obtain an API Key from the ChatDOC Studio console
 2. Configure environment variables
 3. Review the module's documentation and examples
-4. **Upload documents** (for Chat/RAG/Extract Apps) using the Uploads API
-5. **Immediately create your app** using the upload IDs (parsing is auto-triggered when referenced)
-6. Wait for app to be ready before using app features (chat/retrieval/extraction)
+4. **Upload documents** (for Chat/Agent/RAG/Extract Apps) using the Uploads API
+5. **Immediately create your app or task** using the upload IDs (processing is auto-triggered when referenced)
+6. Wait for the app or task to become ready before using downstream features
 7. Integrate into your application
 
 ### Quick Start Examples
@@ -169,6 +178,8 @@ API calls are subject to rate limits based on your subscription plan. HTTP 429 s
 **PDF Parser**: Upload and parse → Get JSON/Markdown/Excel
 
 **Chat App**: Upload documents → Create Chat App → Send messages
+
+**Agent App**: Upload document → Create Agent task → Poll status → Get final result
 
 **RAG App**: Upload documents → Create RAG App → Query content
 

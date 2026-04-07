@@ -1,6 +1,6 @@
 # Apps API
 
-The Apps API allows you to manage all types of applications (Chat, Extract, RAG) in your team.
+The Apps API allows you to manage all types of applications (Chat, Agent, Extract, RAG) in your team.
 
 ## Base Path
 
@@ -15,6 +15,7 @@ The Apps API allows you to manage all types of applications (Chat, Extract, RAG)
 | `1` | ChatApp | Document-based chat application |
 | `2` | ExtractApp | Structured data extraction application |
 | `5` | ContentRetrievalApp | RAG (Retrieval-Augmented Generation) application |
+| `7` | AgentApp | Task-based document analysis application |
 
 **Note**: PDF Parser (type 99) is not an app and is not managed by this API.
 
@@ -46,7 +47,7 @@ Retrieve a paginated list of all applications in your team.
 |-------|------|----------|-------------|
 | `id` | string | No | App ID |
 | `name` | string | No | App name |
-| `app_type` | integer | No | App type (1=Chat, 2=Extract, 5=RAG) |
+| `app_type` | integer | No | App type (1=Chat, 2=Extract, 5=RAG, 7=Agent) |
 | `created_at` | integer | No | Creation timestamp (Unix timestamp) |
 | `updated_at` | integer | No | Last update timestamp (Unix timestamp) |
 
@@ -84,10 +85,11 @@ Delete an application by app_id. This operation permanently removes the app and 
 2. **Deletion Behavior**:
    - For Chat/RAG apps: Deletes all app versions and associated conversations
    - For Extract apps: Soft deletes all app versions with the same app_id
+   - For Agent apps: Deletes all app versions and associated task records
 
 3. **Irreversible**: Deletion is permanent. Make sure you have backups if needed.
 
-4. **App Types**: This API works for Chat (1), Extract (2), and RAG (5) apps. PDF Parser (99) is not supported.
+4. **App Types**: This API works for Chat (1), Extract (2), RAG (5), and Agent (7) apps. PDF Parser (99) is not supported.
 
 ## Important Notes
 
