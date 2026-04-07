@@ -63,6 +63,9 @@ Create a new Agent App task for a published app.
 
 ```json
 {
+"type": "System",
+"code": "success",
+"data":{
   "id": "task_abc123",
   "app_id": "agent_app_xyz",
   "status": "pending",
@@ -76,6 +79,8 @@ Create a new Agent App task for a published app.
   "created_at": 1757320181,
   "updated_at": 1757320181,
   "meta": {}
+},
+ "detail": "string"
 }
 ```
 
@@ -106,6 +111,28 @@ Retrieve task status by task ID.
 | `task_id` | string | Task ID |
 
 **Response:** Same schema as Create Task
+```json
+{
+  "type": "System",
+  "code": "success",
+  "data": {
+    "id": "string",
+    "app_id": "string",
+    "status": "pending",
+    "uploads": [
+      {
+        "id": "string",
+        "name": "string",
+        "file_type": "string"
+      }
+    ],
+    "created_at": 1757320181,
+    "updated_at": 1757320181,
+    "meta": {}
+  },
+  "detail": "string"
+}
+```
 
 **Task Status Values:**
 
