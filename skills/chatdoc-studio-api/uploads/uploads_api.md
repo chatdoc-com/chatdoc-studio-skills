@@ -113,7 +113,12 @@ If the document status is not `indexed` when referenced in an app, the system wi
 ```json
 {
   "app_id": "AGENT_APP_ID",
-  "upload_ids": ["UPLOAD_ID_1"]
+  "documents": [
+    {
+      "label": "文档",
+      "upload_ids": ["UPLOAD_ID_1"]
+    }
+  ]
 }
 ```
 
