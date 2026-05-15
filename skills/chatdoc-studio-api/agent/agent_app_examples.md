@@ -25,13 +25,18 @@ BASE_URL = os.getenv("CHATDOC_STUDIO_BASE_URL", "https://api.chatdoc.studio/v1")
 API_KEY = os.getenv("CHATDOC_STUDIO_API_KEY")
 
 
-def create_agent_task(app_id: str, upload_id: str) -> dict:
+def create_agent_task(app_id: str, slot_label: str, upload_ids: list[str]) -> dict:
     """Create a new Agent App task."""
     url = f"{BASE_URL}/agent/apps/tasks"
     headers = {"Authorization": f"Bearer {API_KEY}"}
     data = {
         "app_id": app_id,
-        "upload_ids": [upload_id],
+        "documents": [
+            {
+                "label": slot_label,
+                "upload_ids": upload_ids,
+            }
+        ],
     }
 
     response = requests.post(url, headers=headers, json=data)
@@ -39,7 +44,7 @@ def create_agent_task(app_id: str, upload_id: str) -> dict:
     return response.json()["data"]
 
 
-task = create_agent_task("agent_app_xyz", "F1CMSW")
+task = create_agent_task("agent_app_xyz", "文档", ["F1CMSW"])
 print(f"Task ID: {task['id']}")
 print(f"Task status: {task['status']}")
 ```
@@ -54,13 +59,17 @@ const API_KEY = process.env.CHATDOC_STUDIO_API_KEY || '';
 
 interface CreateAgentTaskRequest {
   app_id: string;
-  upload_ids: string[];
+  documents: Array<{
+    label: string;
+    upload_ids: string[];
+  }>;
 }
 
 interface UploadInfo {
   id: string;
   name: string;
   file_type: string;
+  label: string | null;
 }
 
 interface AgentTaskResponse {
@@ -88,7 +97,12 @@ async function createAgentTask(data: CreateAgentTaskRequest): Promise<AgentTaskR
 
 const task = await createAgentTask({
   app_id: 'agent_app_xyz',
-  upload_ids: ['F1CMSW'],
+  documents: [
+    {
+      label: '文档',
+      upload_ids: ['F1CMSW'],
+    },
+  ],
 });
 
 console.log(`Task ID: ${task.id}`);
@@ -103,7 +117,12 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/agent/apps/tasks" \
   -H "Content-Type: application/json" \
   -d '{
     "app_id": "agent_app_xyz",
-    "upload_ids": ["F1CMSW"]
+    "documents": [
+      {
+        "label": "文档",
+        "upload_ids": ["F1CMSW"]
+      }
+    ]
   }'
 ```
 
@@ -224,7 +243,7 @@ def wait_for_agent_task(task_id: str, timeout: int = 600, interval: int = 5) -> 
     raise TimeoutError("Timed out waiting for Agent task to finish")
 
 
-task = create_agent_task("agent_app_xyz", "F1CMSW")
+task = create_agent_task("agent_app_xyz", "文档", ["F1CMSW"])
 wait_for_agent_task(task["id"])
 result = get_agent_task_result(task["id"])
 print("Final result:")
@@ -261,7 +280,12 @@ async function waitForAgentTask(
 
 const createdTask = await createAgentTask({
   app_id: 'agent_app_xyz',
-  upload_ids: ['F1CMSW'],
+  documents: [
+    {
+      label: '文档',
+      upload_ids: ['F1CMSW'],
+    },
+  ],
 });
 
 await waitForAgentTask(createdTask.id);
@@ -279,7 +303,12 @@ TASK_ID=$(curl -s -X POST "${CHATDOC_STUDIO_BASE_URL}/agent/apps/tasks" \
   -H "Content-Type: application/json" \
   -d '{
     "app_id": "agent_app_xyz",
-    "upload_ids": ["F1CMSW"]
+    "documents": [
+      {
+        "label": "文档",
+        "upload_ids": ["F1CMSW"]
+      }
+    ]
   }' | jq -r '.data.id')
 
 echo "Created task: ${TASK_ID}"

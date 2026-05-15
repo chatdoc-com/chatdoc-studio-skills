@@ -179,7 +179,7 @@ API calls are subject to rate limits based on your subscription plan. HTTP 429 s
 
 **Chat App**: Upload documents → Create Chat App → Send messages
 
-**Agent App**: Upload document → Create Agent task → Poll status → Get final result
+**Agent App**: Upload required documents → Create Agent task with documents grouped by slot label → Poll status → Get final result
 
 **RAG App**: Upload documents → Create RAG App → Query content
 

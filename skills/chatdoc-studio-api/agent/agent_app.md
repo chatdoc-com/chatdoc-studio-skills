@@ -15,11 +15,14 @@ Before calling this API:
 1. Create and publish the Agent App in ChatDOC Studio.
 2. Use an API key that has `AGENT` capability.
 3. Upload the source document to your team first via the Uploads API.
+4. Check the Agent App's document slot labels. Task documents must be grouped by these labels.
 
 ## Important Notes
 
 - Use `app_id` to identify the target Agent App.
-- `upload_ids` must contain exactly 1 file ID.
+- Use `documents` to pass uploads grouped by document slot label.
+- Each `documents[].label` must match a slot label defined by the Agent App plan.
+- Each `documents[].upload_ids` list must satisfy that slot's required document count.
 
 ## Supported File Types
 
@@ -42,7 +45,9 @@ Create a new Agent App task for a published app.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `app_id` | string | Yes | Public Agent App ID |
-| `upload_ids` | array[string] | Yes | Upload IDs to associate with the task. Must contain exactly 1 item |
+| `documents` | array[object] | Yes | Uploaded documents grouped by Agent App document slot |
+| `documents[].label` | string | Yes | Document slot label from the Agent App plan |
+| `documents[].upload_ids` | array[string] | Yes | Upload IDs for this slot |
 
 **Response:**
 
@@ -55,6 +60,7 @@ Create a new Agent App task for a published app.
 | `uploads[].id` | string | No | Upload ID |
 | `uploads[].name` | string | No | Upload file name |
 | `uploads[].file_type` | string | No | Upload file type |
+| `uploads[].label` | string | Yes | Document slot label this upload belongs to |
 | `created_at` | integer | No | Creation timestamp |
 | `updated_at` | integer | No | Update timestamp |
 | `meta` | object | No | Task metadata. Currently only exposes `error` when present |
@@ -73,7 +79,8 @@ Create a new Agent App task for a published app.
     {
       "id": "F1CMSW",
       "name": "contract.pdf",
-      "file_type": "pdf"
+      "file_type": "pdf",
+      "label": "文档"
     }
   ],
   "created_at": 1757320181,
@@ -90,6 +97,10 @@ Create a new Agent App task for a published app.
 |-----------|------------|-------------|
 | 201 | - | Success |
 | 400 | `no_published_version` | The Agent App is not published |
+| 400 | `unknown_document_label` | A document group label does not match any Agent App document slot |
+| 400 | `insufficient_document_count` | A required document slot is missing or has too few uploaded documents |
+| 400 | `too_many_document_count` | A fixed-count document slot has too many uploaded documents |
+| 400 | `maximum_source_count_exceeded` | An unlimited-count document slot exceeds the maximum allowed upload count |
 | 400 | `unsupported_file_type` | The uploaded file is not PDF/DOC/DOCX-like |
 | 400 | `task_upload_parse_failed` | The uploaded file is already in a failed parse state |
 | 402 | - | Insufficient credits |
@@ -123,7 +134,8 @@ Retrieve task status by task ID.
       {
         "id": "string",
         "name": "string",
-        "file_type": "string"
+        "file_type": "string",
+        "label": "文档"
       }
     ],
     "created_at": 1757320181,
@@ -184,8 +196,8 @@ Retrieve the final text result of a completed task.
 
 ## Recommended Workflow
 
-1. Upload one source file with the Uploads API.
-2. Create a task with the Agent App `app_id` and the uploaded file ID.
+1. Upload the required source files with the Uploads API.
+2. Create a task with the Agent App `app_id` and `documents` grouped by slot label.
 3. Poll `GET /agent/apps/tasks/{task_id}` until status becomes `success` or `failed`.
 4. If status is `success`, call `GET /agent/apps/tasks/{task_id}/result`.
 
@@ -193,7 +205,7 @@ Retrieve the final text result of a completed task.
 
 1. **Published App Required**: The target Agent App must already be published.
 2. **Plan Required**: The Agent App must already have a saved plan, or task creation will fail.
-3. **Single File Only**: `upload_ids` currently supports exactly one file per task.
+3. **Document Slots**: Uploads must be grouped by the slot labels generated in the Agent App plan.
 4. **Automatic Processing**: If the uploaded file has not started parsing yet, task creation can trigger the required background processing automatically.
 5. **Failed Uploads Are Rejected**: Files already in a failed parse state cannot be used to create tasks.
 6. **Polling Required**: Do not call the result endpoint immediately after task creation. Poll task status first.
