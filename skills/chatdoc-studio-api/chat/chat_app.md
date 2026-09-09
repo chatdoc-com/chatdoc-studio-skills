@@ -434,6 +434,20 @@ Send a message to a conversation.
 | `name` | string | No | Conversation name (summary of the chat) |
 | `conversation_id` | string | No | Conversation ID |
 | `answer` | string | No | AI response content |
+| `messages` | array | No | Ordered, aggregated stream events including reasoning, function calls, tool results, and the final answer |
+
+Each item in `messages` contains the following fields:
+
+| Field | Type | Nullable | Description |
+|-------|------|----------|-------------|
+| `msg_id` | string | No | Message ID |
+| `round_id` | string | No | Round ID for this conversation |
+| `role` | string | No | Message role: `system`, `user`, `assistant`, `tool`, or `function` |
+| `content` | string/object/array | No | Text content, structured tool result, or function-call chunks |
+| `reasoning_content` | string/null | Yes | Reasoning content, if available |
+| `is_answer` | boolean | No | Whether this message contributes to the final answer |
+
+The `messages` array preserves intermediate reasoning and tool activity.
 
 **Streaming Response:** Server-Sent Events (SSE) format
 
@@ -444,8 +458,9 @@ Each SSE event contains a JSON object with the following fields:
 | `msg_id` | string | No | Message ID |
 | `round_id` | string | No | Round ID for this conversation |
 | `role` | string | No | Message role: `system`, `user`, `assistant`, `tool`, `function` |
-| `content` | string | Yes | Message content |
+| `content` | string/object/array | No | Text content, structured tool result, or function-call chunks |
 | `reasoning_content` | string/null | Yes | Reasoning content (if available) |
+| `is_answer` | boolean | No | Whether this message contributes to the final answer |
 | `conversation_id` | string | No | Conversation ID |
 | `name` | string | Yes | App name |
 

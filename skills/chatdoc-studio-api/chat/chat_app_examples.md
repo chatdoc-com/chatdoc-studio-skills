@@ -761,10 +761,20 @@ interface SendMessageRequest {
   question: string;
 }
 
+interface ChatMessage {
+  msg_id: string;
+  round_id: string;
+  role: 'system' | 'user' | 'assistant' | 'tool' | 'function';
+  content: string | Record<string, unknown> | Array<Record<string, unknown>>;
+  reasoning_content: string | null;
+  is_answer: boolean;
+}
+
 interface MessageResponse {
   name: string;
   conversation_id: string;
   answer: string;
+  messages: ChatMessage[];
 }
 
 async function sendMessage(
@@ -796,6 +806,7 @@ const result = await sendMessage(
 console.log(`Conversation ID: ${result.conversation_id}`);
 console.log(`Name: ${result.name}`);
 console.log(`Answer: ${result.answer}`);
+console.log(`Events: ${result.messages.length}`);
 ```
 
 ### cURL
@@ -834,9 +845,10 @@ curl -X POST "${CHATDOC_STUDIO_BASE_URL}/chat/apps/abc123/messages?stream=true" 
 interface StreamingMessage {
   msg_id: string;
   round_id: string;
-  role: string;
-  content: string | null;
+  role: 'system' | 'user' | 'assistant' | 'tool' | 'function';
+  content: string | Record<string, unknown> | Array<Record<string, unknown>>;
   reasoning_content: string | null;
+  is_answer: boolean;
   conversation_id: string;
   name: string | null;
 }
